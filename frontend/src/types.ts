@@ -1,133 +1,161 @@
-export interface ToolItem {
+export interface SubscriptionPlan {
   id: number;
-  slug: string;
-  name: string;
-  category: string;
-  description: string;
-  execution_type: 'builtin' | 'http_api' | 'webhook' | 'data_template';
-  endpoint_url: string;
-  http_method: string;
-  headers_json: Record<string, string>;
-  payload_template: string;
-  is_builtin: boolean;
+  code: string;
+  name_ar: string;
+  description_ar: string;
+  monthly_price_usd: number;
+  included_credits: number;
+  max_agents: number;
+  allow_swarm: boolean;
+  allow_custom_tools: boolean;
+  allow_api_access: boolean;
+  allow_autonomous_cron: boolean;
+  is_active: boolean;
+}
+
+export interface ActiveSubscription {
+  id: number;
+  plan_id: number;
+  plan_code: string;
+  plan_name: string;
+  monthly_price_usd: number;
+  included_credits: number;
+  max_agents: number;
+  allow_swarm: boolean;
+  allow_custom_tools: boolean;
+  allow_api_access: boolean;
+  allow_autonomous_cron: boolean;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+}
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  full_name: string;
+  company_name: string;
+  role: 'super_admin' | 'subscriber';
+  is_active: boolean;
+  credits_balance: number;
+  total_spent_credits: number;
+  tenant_llm_provider: string;
+  has_tenant_api_key: boolean;
+  subscription: ActiveSubscription | null;
   created_at: string;
 }
 
-export interface AgentItem {
+export interface PublicPlatformInfo {
+  platform_name: string;
+  stripe_enabled: boolean;
+  manual_payment_instructions: string;
+  allow_tenant_byok: boolean;
+  plans: SubscriptionPlan[];
+}
+
+export interface AgentRecord {
   id: number;
+  user_id: number;
+  is_marketplace_public: boolean;
+  marketplace_credit_fee: number;
   name: string;
   role_title: string;
   domain: string;
   description: string;
   system_prompt: string;
   model: string;
+  temperature: number;
   installed_tools: string[];
   can_delegate: boolean;
+  max_iterations: number;
   trigger_type: 'manual' | 'cron' | 'webhook';
   cron_interval_minutes: number;
-  webhook_token: string;
-  price_per_run: number;
-  max_cost_usd: number;
-  is_system_agent: boolean;
-  status: 'idle' | 'running' | 'paused_by_cfo';
+  webhook_secret: string;
+  status: string;
   total_runs: number;
-  total_cost_usd: number;
-  total_revenue_usd: number;
-  memory_notes: string;
-  last_run_at: string;
+  total_tokens: number;
   created_at: string;
 }
 
-export interface MissionStep {
+export interface ToolRecord {
   id: number;
-  mission_id: number;
+  user_id: number | null;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  execution_type: string;
+  endpoint_url: string;
+  http_method: string;
+}
+
+export interface MissionStepRecord {
+  id: number;
   step_order: number;
   agent_id: number | null;
   agent_name: string;
-  agent_domain: string;
-  step_type: 'orchestration' | 'agent_execution' | 'tool_call' | 'delegation' | 'qa_review' | 'cfo_audit';
-  summary: string;
-  detail_output: string;
-  tool_used: string;
-  cost_usd: number;
-  tokens: number;
+  step_kind: string;
+  tool_name: string;
+  input_payload: string;
+  output_payload: string;
+  tokens_used: number;
+  duration_ms: number;
   created_at: string;
 }
 
-export interface MissionItem {
+export interface MissionRecord {
   id: number;
+  user_id: number;
   title: string;
   goal_prompt: string;
-  mode: 'standalone' | 'swarm';
-  orchestration_strategy: 'auto' | 'manual';
-  selected_agent_ids: number[];
-  trigger_source: string;
+  execution_mode: 'standalone' | 'swarm_sequential' | 'swarm_orchestrated';
+  agent_ids_json: number[];
   status: string;
   final_output: string;
-  total_cost_usd: number;
-  estimated_value_usd: number;
-  net_profit_usd: number;
-  tokens_used: number;
-  qa_score: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  actual_api_cost_usd: number;
+  credits_charged: number;
+  error_message: string;
   created_at: string;
   completed_at: string;
-  steps?: MissionStep[];
+  steps?: MissionStepRecord[];
 }
 
-export interface DomainStat {
-  domain: string;
-  agents_count: number;
-  runs: number;
-  revenue_usd: number;
-  cost_usd: number;
-}
-
-export interface OverviewData {
-  platform_name: string;
-  active_provider: string;
-  metrics: {
-    total_agents: number;
-    worker_agents: number;
-    active_domains: number;
-    installed_tools_pool: number;
-    autonomous_triggers: number;
-    total_runs: number;
-    internal_engine_revenue_usd: number;
-    saas_mrr_usd: number;
-    combined_gross_usd: number;
-    total_api_cost_usd: number;
-    net_profit_usd: number;
-    profit_margin_pct: number;
-    active_saas_clients: number;
-  };
-  domains: string[];
-  domain_breakdown: DomainStat[];
-  recent_missions: MissionItem[];
-}
-
-export interface PlatformSettings {
-  active_provider: string;
-  has_openrouter_key: boolean;
-  has_openai_key: boolean;
-  has_gemini_key: boolean;
-  custom_base_url: string;
-  has_custom_key: boolean;
-  default_model: string;
-  cfo_auto_pause: boolean;
-  qa_gate_enabled: boolean;
-  saas_platform_name: string;
-  saas_credit_markup_x: number;
-}
-
-export interface SaasClient {
+export interface InvoiceRecord {
   id: number;
-  client_name: string;
-  company: string;
-  plan_name: string;
-  monthly_fee_usd: number;
-  credits_balance: number;
-  credits_used: number;
-  assigned_agent_ids: number[];
-  status: string;
+  invoice_number: string;
+  user_id: number;
+  user_email?: string;
+  user_name?: string;
+  plan_id: number | null;
+  plan_name?: string;
+  amount_usd: number;
+  credits_to_grant: number;
+  payment_method: string;
+  payment_reference: string;
+  status: 'pending' | 'paid' | 'rejected';
+  created_at: string;
+  paid_at: string;
+}
+
+export interface WalletTxRecord {
+  id: number;
+  tx_type: string;
+  credits_delta: number;
+  balance_after: number;
+  actual_api_cost_usd: number;
+  platform_profit_usd: number;
+  reference_note: string;
+  created_at: string;
+}
+
+export interface DeveloperKeyRecord {
+  id: number;
+  label: string;
+  key_prefix: string;
+  secret_key?: string;
+  is_active: boolean;
+  last_used_at: string;
   created_at: string;
 }

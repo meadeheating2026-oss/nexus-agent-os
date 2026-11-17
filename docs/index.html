@@ -3,1480 +3,1598 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus AgentOS — نظام تشغيل الوكلاء الذكيين اللانهائي</title>
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <title>Nexus AgentOS Enterprise — Multi-Tenant AI SaaS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
       --background: #0b0f14;
       --sidebar: #10161d;
-      --card: #131a22;
-      --card-border: rgba(255,255,255,0.08);
-      --border: rgba(255,255,255,0.12);
+      --card: #121921;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.12);
       --foreground: #f3f4f6;
       --muted-foreground: #9ca3af;
       --primary: #10b981;
       --primary-foreground: #04130d;
-      --secondary: #1c2530;
+      --secondary: #1b2430;
       --secondary-foreground: #e5e7eb;
       --success: #10b981;
       --warning: #f59e0b;
       --error: #ef4444;
       --link: #38bdf8;
     }
+    body {
+      font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+    }
+    .font-mono, code {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
   </style>
 </head>
 <body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-0">
-  <div id="app" class="min-h-screen flex flex-col lg:flex-row">
-    <!-- Sidebar -->
-    <aside class="w-full lg:w-64 shrink-0 bg-[var(--sidebar)] border-b lg:border-b-0 lg:border-l border-[var(--border)] p-4 flex flex-col justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--border)]">
-          <div class="w-9 h-9 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center font-bold text-sm shrink-0">
-            OS
-          </div>
-          <div class="min-w-0">
-            <div id="brand-title" class="font-bold text-sm truncate">Nexus AgentOS</div>
-            <div class="text-xs text-[var(--muted-foreground)]">نظام تشغيل الوكلاء اللانهائي</div>
-          </div>
-        </div>
-
-        <nav id="nav-tabs" class="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-          <button data-tab="command" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
-            <span>مركز القيادة والأرباح</span>
-          </button>
-          <button data-tab="studio" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
-            <span>مصنع وأسطول الوكلاء</span>
-            <span id="badge-agents" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
-          </button>
-          <button data-tab="missions" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
-            <span>غرفة العمليات والتكامل</span>
-            <span id="badge-missions" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
-          </button>
-          <button data-tab="tools" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
-            <span>مخزن ومنشئ الأدوات</span>
-            <span id="badge-tools" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
-          </button>
-          <button data-tab="saas" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
-            <span>الـ SaaS ومفاتيح الذكاء</span>
-          </button>
-        </nav>
-      </div>
-
-      <div class="hidden lg:block p-3 rounded-lg bg-[var(--card)] border border-[var(--card-border)] text-xs space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="font-semibold">حالة النواة</span>
-          <span class="text-[var(--success)] font-semibold">● نشط 24/7</span>
-        </div>
-        <div class="text-[var(--muted-foreground)] flex items-center justify-between">
-          <span>المحرك:</span>
-          <span id="sidebar-provider" class="font-mono">Autonomous Core</span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Workspace -->
-    <main class="flex-1 min-w-0 p-4 sm:p-6 space-y-6">
-      <!-- TAB 1: COMMAND CENTER -->
-      <section id="view-command" class="space-y-6">
-        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div>
-            <h1 class="text-lg font-bold">مركز القيادة والأرباح الشامل</h1>
-            <p class="text-xs text-[var(--muted-foreground)] mt-1">
-              مراقبة حية لأسطول الوكلاء عبر كافة المجالات، صافي الربح المزدوج (المهام الذاتية + اشتراكات الـ SaaS)، ورقابة التكلفة الآلية.
-            </p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button id="cmd-run-swarm-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90">
-              ▶ تشغيل مهمة تكاملية
-            </button>
-            <button id="cmd-add-agent-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-              + إضافة وكيل في أي مجال
-            </button>
-          </div>
-        </div>
-
-        <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3"></div>
-
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
-          <div class="xl:col-span-7 bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
-              <span class="font-bold text-sm">أداء القطاعات والمجالات النشطة</span>
-              <span class="text-xs text-[var(--success)] font-medium">يدعم أي مجال جديد بلا حدود</span>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
-                  <tr>
-                    <th class="py-2.5 px-4">المجال / القطاع</th>
-                    <th class="py-2.5 px-3">الوكلاء</th>
-                    <th class="py-2.5 px-3">المهام</th>
-                    <th class="py-2.5 px-3">التكلفة</th>
-                    <th class="py-2.5 px-4">العائد المحقق</th>
-                  </tr>
-                </thead>
-                <tbody id="domains-table-body" class="divide-y divide-[var(--card-border)]"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="xl:col-span-5 bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
-              <span class="font-bold text-sm">أحدث العمليات المنفذة</span>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
-                  <tr>
-                    <th class="py-2.5 px-4">المهمة</th>
-                    <th class="py-2.5 px-3">الوضع</th>
-                    <th class="py-2.5 px-3">صافي الربح</th>
-                    <th class="py-2.5 px-3">عرض</th>
-                  </tr>
-                </thead>
-                <tbody id="recent-missions-body" class="divide-y divide-[var(--card-border)]"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 2: AGENT STUDIO -->
-      <section id="view-studio" class="hidden space-y-5">
-        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div>
-            <h1 class="text-lg font-bold">مصنع وأسطول الوكلاء اللانهائي (Agent Studio)</h1>
-            <p class="text-xs text-[var(--muted-foreground)] mt-1">
-              أضف 100+ وكيل أو أكثر في أي مجال يخطر ببالك، زوّد كل وكيل بالبرومبت وأدواته اللازمة، وشغّله مستقلاً أو متكاملاً مع زملائه.
-            </p>
-          </div>
-          <button id="studio-new-agent-btn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-            + بناء وكيل جديد في أي مجال
-          </button>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div id="domain-filter-chips" class="flex flex-wrap gap-1.5"></div>
-          <input
-            id="studio-search"
-            type="search"
-            placeholder="ابحث في الأسطول بالاسم أو المجال..."
-            class="w-full sm:w-64 px-3 py-2 rounded-lg text-xs bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none"
-          />
-        </div>
-
-        <div id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-      </section>
-
-      <!-- TAB 3: MISSION CONTROL -->
-      <section id="view-missions" class="hidden space-y-5">
-        <div class="pb-4 border-b border-[var(--border)]">
-          <h1 class="text-lg font-bold">غرفة العمليات والتكامل الحي (Mission Control)</h1>
-          <p class="text-xs text-[var(--muted-foreground)] mt-1">
-            شغّل وكيلاً منفرداً بكامل استقلاليته، أو ادمج عدة وكلاء من مجالات مختلفة ليتكاملوا خطوة بخطوة في مهمة واحدة تحت رقابة الجودة والمدير المالي.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <!-- Mission Form -->
-          <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
-            <div class="font-bold text-sm pb-2 border-b border-[var(--card-border)]">إعداد وإطلاق المهمة</div>
-
-            <div class="space-y-1.5">
-              <div class="text-xs font-semibold text-[var(--muted-foreground)]">نمط التشغيل</div>
-              <div class="grid grid-cols-2 gap-2">
-                <button type="button" id="mc-mode-swarm" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
-                  تكامل عدة وكلاء (Swarm)
-                </button>
-                <button type="button" id="mc-mode-solo" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
-                  وكيل مستقل منفرد
-                </button>
-              </div>
-            </div>
-
-            <div id="mc-strategy-box" class="space-y-1.5">
-              <div class="text-xs font-semibold text-[var(--muted-foreground)]">طريقة اختيار الفريق المتكامل</div>
-              <div class="grid grid-cols-2 gap-2">
-                <button type="button" id="mc-strat-auto" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
-                  ✨ اختيار ذكي تلقائي
-                </button>
-                <button type="button" id="mc-strat-manual" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
-                  تحديد يدوي للوكلاء
-                </button>
-              </div>
-            </div>
-
-            <div id="mc-agent-picker-box" class="hidden space-y-1.5">
-              <div id="mc-picker-label" class="text-xs font-semibold text-[var(--muted-foreground)]">اختر الوكلاء المشاركين:</div>
-              <div id="mc-agent-list" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
-            </div>
-
-            <div class="space-y-1.5">
-              <label for="mc-goal-input" class="text-xs font-semibold text-[var(--muted-foreground)] block">الهدف أو المهمة المطلوبة *</label>
-              <textarea
-                id="mc-goal-input"
-                rows="4"
-                placeholder="اكتب الهدف بالتفصيل... مثال: افحص فرص السوق، ابنِ عرض مبيعات متكامل، واحسب العائد المتوقع."
-                class="w-full p-3 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none"
-              ></textarea>
-              <div class="flex flex-wrap gap-1.5 pt-1">
-                <button type="button" data-preset="افحص نقاط الضعف التسويقية والتقنية لشركات العقارات والعيادات، قدّر الخسارة الشهرية بالأرقام، وجهز عرض إصلاح فوري مع 3 رسائل إغلاق مبيعات." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
-                  + فحص شركات وإغلاق مبيعات
-                </button>
-                <button type="button" data-preset="استخرج أفضل 5 كلمات مفتاحية شرائية منخفضة المنافسة في برامج الذكاء الاصطناعي، وابنِ هيكل مقال مقارنة شامل مجهز بروابط العمولة." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
-                  + خطة SEO وأفلييت
-                </button>
-                <button type="button" data-preset="صمم أداة رقمية مصغرة Micro-SaaS لحل مشكلة استرجاع السلات المتروكة للمتاجر مع خطة الكود والتسعير الشهري." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
-                  + بناء أداة Micro-SaaS
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <label for="mc-value-input" class="text-xs font-semibold text-[var(--muted-foreground)] block">القيمة المالية / تسعير العميل للمهمة ($) (اختياري)</label>
-              <input
-                id="mc-value-input"
-                type="number"
-                min="0"
-                step="5"
-                placeholder="يُحسب تلقائياً من تسعير الوكلاء المشاركين"
-                class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]"
-              />
-            </div>
-
-            <div id="mc-error" class="hidden p-2.5 rounded-lg text-xs text-[var(--error)] bg-[var(--background)] border border-[var(--border)]"></div>
-
-            <button id="mc-execute-btn" type="button" class="w-full py-2.5 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-              ▶ إطلاق التنفيذ الحي الآن
-            </button>
-
-            <div class="pt-3 border-t border-[var(--card-border)] space-y-1.5">
-              <div class="text-xs text-[var(--muted-foreground)]">سجل المهام المنفذة (انقر للاستعراض):</div>
-              <div id="mc-history-list" class="max-h-36 overflow-y-auto space-y-1"></div>
-            </div>
-          </div>
-
-          <!-- Live Trace & Output -->
-          <div class="lg:col-span-7 space-y-4">
-            <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-              <div class="px-4 py-3 border-b border-[var(--card-border)] flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div id="trace-title" class="font-bold text-sm">سجل تدفق وتكامل الوكلاء</div>
-                  <div id="trace-subtitle" class="text-xs text-[var(--muted-foreground)]">اختر أو أطلق مهمة لمشاهدة خطوات التنفيذ</div>
-                </div>
-                <div id="trace-badges" class="flex flex-wrap gap-2 text-xs"></div>
-              </div>
-              <div id="trace-steps" class="divide-y divide-[var(--card-border)]"></div>
-            </div>
-
-            <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
-              <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
-                <span class="font-bold text-sm">المخرج النهائي المعتمد (جاهز للنشر أو التسليم)</span>
-                <button id="copy-deliverable-btn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
-                  نسخ المخرج
-                </button>
-              </div>
-              <div class="p-4">
-                <pre id="trace-deliverable" class="whitespace-pre-wrap font-sans text-xs leading-relaxed p-4 rounded-lg bg-[var(--background)] border border-[var(--border)] max-h-96 overflow-y-auto"></pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: TOOL REGISTRY -->
-      <section id="view-tools" class="hidden space-y-5">
-        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div>
-            <h1 class="text-lg font-bold">مخزن ومنشئ الأدوات القابلة للتثبيت (Tool Registry)</h1>
-            <p class="text-xs text-[var(--muted-foreground)] mt-1">
-              ركّب الأدوات المدمجة للوكلاء أو أنشئ أداة مخصصة جديدة (REST API / Webhook / قالب بيانات) لأي مجال أو موقع خارجي في ثوانٍ.
-            </p>
-          </div>
-          <button id="open-tool-modal-btn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">
-            + إضافة أداة مخصصة جديدة
-          </button>
-        </div>
-
-        <div id="tool-test-banner" class="hidden p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)] text-xs space-y-1"></div>
-
-        <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-      </section>
-
-      <!-- TAB 5: SAAS & SETTINGS -->
-      <section id="view-saas" class="hidden space-y-5">
-        <div class="pb-4 border-b border-[var(--border)]">
-          <h1 class="text-lg font-bold">إدارة عملاء الـ SaaS ومحرك الذكاء الاصطناعي</h1>
-          <p class="text-xs text-[var(--muted-foreground)] mt-1">
-            اربط مفتاح التشغيل المباشر (OpenRouter / Gemini / OpenAI) لتنفيذ المهام عبر الموديلات العالمية، وأدر الشركات المشتركة شهرياً في منصتك.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div class="lg:col-span-6 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
-            <div class="flex items-center justify-between pb-2 border-b border-[var(--card-border)]">
-              <span class="font-bold text-sm">إعدادات مزود الذكاء الاصطناعي وحوكمة الربح</span>
-              <span id="settings-saved-msg" class="hidden text-xs text-[var(--success)] font-semibold">✓ تم الحفظ</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم منصتك التجارية (SaaS)</label>
-                <input id="set-brand" type="text" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-              </div>
-              <div class="space-y-1">
-                <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مضاعف ربح الـ Credits على العملاء (x)</label>
-                <input id="set-markup" type="number" step="0.5" min="1" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مزود تشغيل الوكلاء</label>
-              <select id="set-provider" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
-                <option value="simulation">المحرك الذاتي الفوري (بدون مفتاح API — جاهز للتجربة فوراً)</option>
-                <option value="openrouter">OpenRouter API (يشغّل كل الموديلات بمفتاح واحد)</option>
-                <option value="gemini">Google Gemini API مباشر</option>
-                <option value="openai">OpenAI API مباشر</option>
-              </select>
-            </div>
-
-            <div id="api-key-box" class="hidden space-y-1">
-              <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مفتاح الـ API للمزود المختار</label>
-              <input id="set-apikey" type="password" placeholder="sk-..." class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-            </div>
-
-            <label class="flex items-center gap-2 text-xs cursor-pointer">
-              <input id="set-cfo" type="checkbox" class="accent-[var(--primary)]" />
-              <span>تفعيل وكيل المدير المالي (CFO): إيقاف أي وكيل يتخطى سقف التكلفة المسموح</span>
-            </label>
-
-            <label class="flex items-center gap-2 text-xs cursor-pointer">
-              <input id="set-qa" type="checkbox" class="accent-[var(--primary)]" />
-              <span>تفعيل بوابة فحص الجودة (QA Critic) قبل تسليم المخرجات</span>
-            </label>
-
-            <div class="flex flex-wrap gap-2 pt-2">
-              <button id="save-settings-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">
-                حفظ الإعدادات
-              </button>
-              <button id="export-fleet-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
-                تصدير أسطول الوكلاء (JSON)
-              </button>
-            </div>
-          </div>
-
-          <div class="lg:col-span-6 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
-            <div class="font-bold text-sm pb-2 border-b border-[var(--card-border)]">مشتركو منصة الـ SaaS (تأجير الوكلاء للشركات)</div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input id="cl-name" type="text" placeholder="اسم الشركة العميلة *" class="px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-              <input id="cl-plan" type="text" value="باقة الشركات الذكية" class="px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-              <div class="flex gap-2">
-                <input id="cl-fee" type="number" value="299" placeholder="$/شهر" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-                <button id="add-client-btn" type="button" class="px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] shrink-0">
-                  + إضافة
-                </button>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
-                  <tr>
-                    <th class="py-2 px-3">الشركة المشتركة</th>
-                    <th class="py-2 px-3">الباقة</th>
-                    <th class="py-2 px-3">الاشتراك الشهري</th>
-                    <th class="py-2 px-2">حذف</th>
-                  </tr>
-                </thead>
-                <tbody id="clients-tbody" class="divide-y divide-[var(--card-border)]"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- MODAL: CREATE / EDIT AGENT IN ANY DOMAIN -->
-  <div id="agent-modal" class="hidden fixed inset-0 z-50 bg-black/70 p-4 flex items-center justify-center">
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[var(--card-border)]">
-        <h2 id="agent-modal-title" class="font-bold text-sm">بناء وتثبيت وكيل جديد (في أي مجال يخطر ببالك)</h2>
-        <button id="close-agent-modal" type="button" class="text-xs px-2 py-1 rounded bg-[var(--secondary)]">✕</button>
-      </div>
-
-      <!-- AI Meta Spawner -->
-      <div id="spawner-box" class="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] space-y-2">
-        <div class="text-xs font-semibold text-[var(--warning)]">✨ المولّد الذكي للوكلاء (اكتب الفكرة في سطر واحد وسيبني البرومبت ويختار الأدوات تلقائياً):</div>
-        <div class="flex flex-wrap gap-2">
-          <input id="ag-idea" type="text" placeholder="مثال: وكيل خبير في مزادات السيارات يحسب الجمارك والشحن، أو مراجعة العقود القانونية..." class="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-xs bg-[var(--card)] border border-[var(--border)]" />
-          <button id="ag-spawn-btn" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
-            توليد تكوين الوكيل
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم الوكيل *</label>
-          <input id="ag-name" type="text" placeholder="مثال: مستشار العقود والمناقصات الذكي" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] flex justify-between">
-            <span>المجال / القطاع *</span>
-            <span class="text-[var(--success)] font-normal">اكتب أي مجال جديد بحرية</span>
-          </label>
-          <input id="ag-domain" list="domains-datalist" type="text" placeholder="اكتب أي مجال (عقارات، قانون، طب، طيران...)" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-          <datalist id="domains-datalist"></datalist>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">المسمى التخصصي</label>
-          <input id="ag-role" type="text" placeholder="خبير صيد فرص وتسعير آلي" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">الموديل المشغّل</label>
-          <select id="ag-model" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
-            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (سريع وأقل تكلفة)</option>
-            <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
-            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-            <option value="deepseek/deepseek-chat">DeepSeek V3</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">وصف مختصر لدور الوكيل (يقرأه المنسق عند دمج الوكلاء)</label>
-        <input id="ag-desc" type="text" placeholder="متى يستعين به باقي الأسطول وماذا ينتج..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-      </div>
-
-      <div class="space-y-1">
-        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">برومبت المهمة والقواعد التشغيلية (System Prompt) *</label>
-        <textarea id="ag-prompt" rows="4" placeholder="اكتب التعليمات التفصيلية للمهمة التي سينفذها الوكيل وشكل المخرجات..." class="w-full p-3 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]"></textarea>
-      </div>
-
-      <div class="space-y-1.5">
-        <div class="text-xs font-semibold text-[var(--muted-foreground)]">تثبيت الأدوات اللازمة للمهمة:</div>
-        <div id="ag-tools-checks" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">التشغيل الذاتي</label>
-          <select id="ag-trigger" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
-            <option value="manual">عند الطلب / استدعاء منسق</option>
-            <option value="cron">جدولة ذاتية (Cron 24/7)</option>
-            <option value="webhook">رابط Webhook فوري</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">العائد / التسعير للمهمة ($)</label>
-          <input id="ag-price" type="number" value="35" min="0" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">سقف تكلفة الـ API ($)</label>
-          <input id="ag-maxcost" type="number" value="0.50" step="0.05" min="0.01" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-      </div>
-
-      <label class="flex items-center gap-2 text-xs cursor-pointer">
-        <input id="ag-delegate" type="checkbox" checked class="accent-[var(--primary)]" />
-        <span>السماح لهذا الوكيل بالتكامل وطلب مساعدة أي وكيل زميل في الأسطول عند الحاجة</span>
-      </label>
-
-      <div id="ag-modal-err" class="hidden text-xs text-[var(--error)]"></div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-[var(--card-border)]">
-        <button id="cancel-agent-modal" type="button" class="px-4 py-2 rounded-lg text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)]">إلغاء</button>
-        <button id="save-agent-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">تثبيت وتشغيل الوكيل</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CREATE CUSTOM TOOL -->
-  <div id="tool-modal" class="hidden fixed inset-0 z-50 bg-black/70 p-4 flex items-center justify-center">
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl w-full max-w-lg p-5 space-y-4">
-      <div class="flex items-center justify-between pb-3 border-b border-[var(--card-border)]">
-        <h2 class="font-bold text-sm">إضافة أداة مخصصة جديدة لمخزن النظام</h2>
-        <button id="close-tool-modal" type="button" class="text-xs px-2 py-1 rounded bg-[var(--secondary)]">✕</button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم الأداة *</label>
-          <input id="tl-name" type="text" placeholder="مثال: نشر ووردبريس / API مزادات" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">التصنيف / المجال</label>
-          <input id="tl-cat" type="text" placeholder="مثال: عقارات، واتساب، متاجر..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-        </div>
-      </div>
-
-      <div class="space-y-1">
-        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">وصف وظيفة الأداة *</label>
-        <input id="tl-desc" type="text" placeholder="اشرح ماذا تفعل الأداة متى يستخدمها الوكيل..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
-      </div>
-
-      <div class="space-y-1">
-        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">رابط الـ API أو Webhook (اختياري)</label>
-        <input id="tl-url" type="url" placeholder="https://api.example.com/webhook" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-[var(--card-border)]">
-        <button id="cancel-tool-modal" type="button" class="px-4 py-2 rounded-lg text-xs bg-[var(--secondary)]">إلغاء</button>
-        <button id="save-tool-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">إضافة الأداة</button>
-      </div>
-    </div>
-  </div>
+  <div id="app" class="w-full"></div>
 
   <script>
-    const STORAGE_KEY = 'nexus_agentos_state_v1';
+    const DB_KEY = 'nexus_enterprise_saas_v2';
 
-    const DEFAULT_STATE = {
-      settings: {
-        brand: 'Nexus AgentOS',
-        provider: 'simulation',
-        apiKey: '',
-        markupX: 4.0,
-        cfoAutoPause: true,
-        qaGate: true
+    async function sha256Hex(text) {
+      const buf = new TextEncoder().encode('nexus_salt_2026::' + text);
+      const digest = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function randHex(len = 16) {
+      const arr = new Uint8Array(len);
+      crypto.getRandomValues(arr);
+      return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    const DEFAULT_PLANS = [
+      { id: 1, code: 'free_trial', name_ar: 'الباقة التجريبية (Free Trial)', price: 0, credits: 250, max_agents: 2, allow_swarm: false, allow_custom_tools: false, allow_api: false },
+      { id: 2, code: 'pro_builder', name_ar: 'باقة المحترفين (Pro Builder)', price: 29, credits: 12000, max_agents: 10, allow_swarm: true, allow_custom_tools: true, allow_api: false },
+      { id: 3, code: 'business_swarm', name_ar: 'باقة الشركات والسرب (Business Swarm)', price: 99, credits: 60000, max_agents: 50, allow_swarm: true, allow_custom_tools: true, allow_api: true },
+      { id: 4, code: 'enterprise_unlimited', name_ar: 'باقة المؤسسات غير المحدودة (Enterprise)', price: 299, credits: 250000, max_agents: -1, allow_swarm: true, allow_custom_tools: true, allow_api: true }
+    ];
+
+    const MARKETPLACE_TEMPLATES = [
+      {
+        tpl_id: 'mkt_quant',
+        name: 'المحلل المالي الكمي (Quant Strategist)',
+        role_title: 'محلل مخاطر وعوائد استثمارية',
+        domain: 'المالية والاستثمار',
+        model: 'gemini-2.5-flash',
+        description: 'يحلل الصفقات الاستثمارية ويحسب التدفقات النقدية ومعدل العائد المركب بدقة رياضية.',
+        system_prompt: 'أنت محلل مالي كمي محترف. استخدم أداة python_eval دائماً لإجراء أي حسابات مالية أو نسب عائد أو فائدة مركبة بدقة، وقدم توصية تنفيذية بالعربية.',
+        tools: ['python_eval', 'memory_kv'],
+        can_delegate: true,
+        fee: 0
       },
-      tools: [
-        { id: 1, slug: 'web_search', name: 'البحث الحي في الويب', category: 'الويب والبيانات', description: 'رصد الكلمات المفتاحية والمنافسين والأخبار وفرص السوق في أي قطاع.', is_builtin: true, endpoint_url: '' },
-        { id: 2, slug: 'web_scraper', name: 'ساحِب وفاحص المواقع', category: 'الويب والبيانات', description: 'فتح روابط المواقع وسحب البيانات وفحص الأسعار ونقاط الضعف.', is_builtin: true, endpoint_url: '' },
-        { id: 3, slug: 'http_webhook', name: 'موصل الأنظمة والـ API العام', category: 'التكامل والأتمتة', description: 'الاتصال بأي منصة خارجية (Shopify, WordPress, Stripe, WhatsApp, Zapier).', is_builtin: true, endpoint_url: '' },
-        { id: 4, slug: 'python_sandbox', name: 'مختبر الكود والتحليل الرقمي', category: 'البرمجة والتحليل', description: 'تشغيل النماذج الحسابية والمالية وتحليل البيانات وتوليد السكربتات.', is_builtin: true, endpoint_url: '' },
-        { id: 5, slug: 'persistent_memory', name: 'الذاكرة التراكمية المستمرة', category: 'نواة الوكيل', description: 'حفظ خبرات الوكيل وسجل المهام لمنع التكرار وتحسين الدقة تلقائياً.', is_builtin: true, endpoint_url: '' },
-        { id: 6, slug: 'delegate_to_agent', name: 'بروتوكول استدعاء وتكامل الوكلاء', category: 'التكامل الجماعي', description: 'البحث في سجل الـ 100+ وكيل وطلب مساعدة تخصصية من أي وكيل زميل.', is_builtin: true, endpoint_url: '' },
-        { id: 7, slug: 'publish_deliverable', name: 'حزم وتصدير المخرجات للبيع', category: 'التسليم والمبيعات', description: 'تنسيق التقرير أو المقال أو الكود بصيغة جاهزة للنشر الفوري أو التسليم للعميل.', is_builtin: true, endpoint_url: '' }
-      ],
-      agents: [
-        {
-          id: 1, name: 'المنسق العام للأسطول (Master Orchestrator)', role_title: 'قائد توزيع المهام والتكامل',
-          domain: 'الإدارة العليا ونواة النظام', description: 'يحلل الأهداف الكبرى ويختار أفضل توليفة وكلاء ويدير تسليم المهام بينهم.',
-          system_prompt: 'فكك الهدف إلى مهام تخصصية واختر أنسب الوكلاء من السجل.', model: 'google/gemini-2.5-flash',
-          installed_tools: ['persistent_memory', 'delegate_to_agent'], can_delegate: true, trigger_type: 'manual',
-          price_per_run: 0, max_cost_usd: 0.2, is_system_agent: true, status: 'idle', total_runs: 6, total_cost_usd: 0.0024, total_revenue_usd: 0
-        },
-        {
-          id: 2, name: 'وكيل المدير المالي (CFO Guardrail)', role_title: 'مراقب التكلفة وتعظيم صافي الربح',
-          domain: 'الإدارة العليا ونواة النظام', description: 'يراقب تكلفة التوكنز لكل وكيل بالسنت مقابل العائد ويوقف أي وكيل يتخطى ميزانيته.',
-          system_prompt: 'احسب التكلفة مقابل العائد وحافظ على هامش ربح يتجاوز 85%.', model: 'google/gemini-2.5-flash',
-          installed_tools: ['python_sandbox', 'persistent_memory'], can_delegate: false, trigger_type: 'manual',
-          price_per_run: 0, max_cost_usd: 0.1, is_system_agent: true, status: 'idle', total_runs: 6, total_cost_usd: 0.0008, total_revenue_usd: 0
-        },
-        {
-          id: 3, name: 'صائد الكلمات والـ SEO والأفلييت', role_title: 'خبير Programmatic SEO والتسويق بالعمولة',
-          domain: 'الـ SEO والنشر والتسويق بالعمولة', description: 'يكتشف الكلمات الشرائية منخفضة المنافسة ويبني مقالات مراجعات مجهزة بروابط العمولة.',
-          system_prompt: 'ابحث عن كلمات شرائية عالية العمولة، صمم مقال مقارنة متفوق، وحدد مواضع روابط الأفلييت.', model: 'google/gemini-2.5-flash',
-          installed_tools: ['web_search', 'web_scraper', 'http_webhook', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'cron',
-          price_per_run: 35, max_cost_usd: 0.4, is_system_agent: false, status: 'idle', total_runs: 4, total_cost_usd: 0.0048, total_revenue_usd: 140
-        },
-        {
-          id: 4, name: 'فاحص مواقع الشركات وصائد الأخطاء', role_title: 'محلل الثغرات التسويقية والتقنية للشركات B2B',
-          domain: 'فحص الشركات وجلب العملاء B2B', description: 'يفحص مواقع المتاجر والشركات، يستخرج الأخطاء التي تضيع المبيعات، ويجهز تقريراً تشخيصياً.',
-          system_prompt: 'افحص قطاع الشركة واستخرج 5 ثغرات في التحويل والـ SEO وقدر الخسارة المالية الشهرية بالأرقام.', model: 'google/gemini-2.5-flash',
-          installed_tools: ['web_scraper', 'web_search', 'python_sandbox', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'manual',
-          price_per_run: 65, max_cost_usd: 0.5, is_system_agent: false, status: 'idle', total_runs: 6, total_cost_usd: 0.0079, total_revenue_usd: 390
-        },
-        {
-          id: 5, name: 'قناص المبيعات والإغلاق الآلي (Closer)', role_title: 'خبير رسائل الإقناع وتحويل العملاء لدفع فوري',
-          domain: 'المبيعات وأتمتة خدمة العملاء', description: 'يصيغ رسائل مبيعات مخصصة عالية التحويل ويرد على الاعتراضات ويرسل روابط الدفع 24/7.',
-          system_prompt: 'حول نتائج الفحص إلى رسالة بيعية مقنعة مع رابط دفع وتسلسل متابعة من 3 رسائل.', model: 'openai/gpt-4o-mini',
-          installed_tools: ['http_webhook', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'webhook',
-          price_per_run: 45, max_cost_usd: 0.35, is_system_agent: false, status: 'idle', total_runs: 5, total_cost_usd: 0.0052, total_revenue_usd: 225
-        },
-        {
-          id: 6, name: 'مهندس الـ Micro-SaaS والأدوات البرمجية', role_title: 'مطور أدوات رقمية وسكربتات قابلة للبيع',
-          domain: 'هندسة البرمجيات والـ Micro-SaaS', description: 'يرصد المشاكل التقنية المتكررة ويبني أدوات مصغرة وإضافات متصفح جاهزة للبيع المتكرر.',
-          system_prompt: 'صمم معمارية أداة خفيفة سريعة التنفيذ واكتب الكود الأساسي وخطة التسعير.', model: 'anthropic/claude-3.5-sonnet',
-          installed_tools: ['python_sandbox', 'web_search', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'manual',
-          price_per_run: 85, max_cost_usd: 0.8, is_system_agent: false, status: 'idle', total_runs: 3, total_cost_usd: 0.0061, total_revenue_usd: 255
-        },
-        {
-          id: 7, name: 'رادار المنتجات والتجارة الإلكترونية', role_title: 'محلل المنتجات الرابحة وصفحات الهبوط',
-          domain: 'التجارة الإلكترونية والمنتجات', description: 'يحلل شكاوى المشترين، يكتشف المنتجات عالية الهامش، ويكتب صفحات هبوط تضاعف الشراء.',
-          system_prompt: 'حلل هامش الربح واكتب صفحة منتج عالية التحويل مع حزم رفع قيمة السلة.', model: 'google/gemini-2.5-flash',
-          installed_tools: ['web_search', 'web_scraper', 'python_sandbox', 'publish_deliverable'], can_delegate: true, trigger_type: 'cron',
-          price_per_run: 40, max_cost_usd: 0.45, is_system_agent: false, status: 'idle', total_runs: 3, total_cost_usd: 0.0036, total_revenue_usd: 120
-        },
-        {
-          id: 8, name: 'محلل الفرص المالية والـ Arbitrage', role_title: 'باحث كمي لرصد فروق الأسعار والفرص',
-          domain: 'الأسواق المالية والتداول الكمي', description: 'يراقب المؤشرات وفروق الأسعار بين الأسواق ويصدر تقارير فرص محسوبة المخاطر.',
-          system_prompt: 'افحص المؤشرات الرقمية واحسب نسبة العائد إلى المخاطرة بدقة.', model: 'deepseek/deepseek-chat',
-          installed_tools: ['web_search', 'python_sandbox', 'http_webhook', 'persistent_memory'], can_delegate: true, trigger_type: 'cron',
-          price_per_run: 55, max_cost_usd: 0.4, is_system_agent: false, status: 'idle', total_runs: 4, total_cost_usd: 0.0044, total_revenue_usd: 220
-        }
-      ],
-      clients: [
-        { id: 1, name: 'مجموعة الرواد العقارية', plan: 'باقة الشركات الذكية (Swarm)', fee: 299 },
-        { id: 2, name: 'متجر نانو تك الإلكتروني', plan: 'باقة التجارة والمبيعات الآلية', fee: 199 }
-      ],
-      missions: [
-        {
-          id: 1,
-          title: 'فحص متاجر إلكترونية وإطلاق حملة إغلاق مبيعات فورية',
-          mode: 'swarm',
-          qa_score: 97,
-          total_cost_usd: 0.0029,
-          estimated_value_usd: 110,
-          net_profit_usd: 109.9971,
-          steps: [
-            { order: 1, agent: 'المنسق العام للأسطول', domain: 'نواة النظام', tool: 'agent_router', summary: 'تفكيك الهدف وتشكيل خلية عمل من [فاحص مواقع الشركات] ثم [قناص المبيعات والإغلاق الآلي].' },
-            { order: 2, agent: 'فاحص مواقع الشركات وصائد الأخطاء', domain: 'فحص الشركات وجلب العملاء B2B', tool: 'web_scraper', summary: 'استخراج 4 ثغرات قاتلة في سرعة الدفع والـ SEO وتقدير الفاقد الشهري بالأرقام.' },
-            { order: 3, agent: 'قناص المبيعات والإغلاق الآلي (Closer)', domain: 'المبيعات وأتمتة خدمة العملاء', tool: 'http_webhook', summary: 'صياغة عرض الإصلاح المخصص + 3 رسائل متابعة تلقائية مرتبطة بنتائج الفحص.' },
-            { order: 4, agent: 'وكيل المدير المالي (CFO Guardrail)', domain: 'الرقابة المالية', tool: 'cfo_audit', summary: 'التكلفة $0.0029 مقابل عائد $110.00 — صافي الربح $109.99 (هامش 99.99%).' }
-          ],
-          final_output: '# التقرير والمخرج النهائي المعتمد\n\n## 1. نتائج فحص الشركات\n- تم رصد 4 ثغرات رئيسية تسبب تسرب 38% من الزوار قبل إتمام الدفع.\n- تم تجهيز خطة الإصلاح السريع القابلة للتسليم الفوري.\n\n## 2. حزمة الإغلاق البيعي الآلي\n- رسالة أولى مخصصة بأرقام الفحص + رابط دفع مباشر.\n- 3 رسائل متابعة مجدولة تلقائياً عبر Webhook.'
-        }
-      ]
+      {
+        tpl_id: 'mkt_arch',
+        name: 'مهندس الأنظمة والأمن (Principal Architect)',
+        role_title: 'معماري بنية سحابية ومراجع كود',
+        domain: 'هندسة البرمجيات',
+        model: 'gemini-2.5-flash',
+        description: 'يصمم معماريات الأنظمة الموزعة ويراجع الثغرات الأمنية وخطط التوسع.',
+        system_prompt: 'أنت كبير مهندسي البرمجيات والأمن السيبراني. قدم حلولاً هندسية عميقة وقابلة للتنفيذ الفوري مع أمثلة كود واضحة.',
+        tools: ['python_eval', 'memory_kv'],
+        can_delegate: true,
+        fee: 15
+      },
+      {
+        tpl_id: 'mkt_growth',
+        name: 'مخطط النمو والاستحواذ (Growth Director)',
+        role_title: 'خبير تسعير SaaS واستحواذ عملاء',
+        domain: 'التجارة والنمو',
+        model: 'gemini-2.5-flash',
+        description: 'يبني خطط التسعير واقتصاديات الوحدة (CAC / LTV) وحملات الإطلاق.',
+        system_prompt: 'أنت خبير نمو وتسعير منصات SaaS. استخدم python_eval لحساب مؤشرات LTV/CAC وهياكل التسعير بدقة رقمية.',
+        tools: ['python_eval', 'memory_kv'],
+        can_delegate: true,
+        fee: 10
+      }
+    ];
+
+    let state = null;
+    let ui = {
+      authMode: 'login',
+      tab: 'dashboard',
+      adminSubTab: 'finance',
+      notice: '',
+      error: '',
+      busy: false,
+      showAgentModal: false,
+      missionMode: 'standalone',
+      selectedAgentIds: [],
+      selectedMissionId: null
     };
 
-    let state = loadState();
-    let activeTab = 'command';
-    let studioDomain = 'all';
-    let studioSearch = '';
-    let editingAgentId = null;
-
-    // Mission control UI state
-    let mcMode = 'swarm';
-    let mcStrategy = 'auto';
-    let mcSelectedIds = [4, 5];
-    let inspectedMissionId = state.missions[0]?.id || null;
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch (e) {}
-      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    async function initStore() {
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        try {
+          state = JSON.parse(raw);
+          return;
+        } catch (_) {}
+      }
+      const adminHash = await sha256Hex('Admin@2026!');
+      state = {
+        config: {
+          platform_name: 'Nexus AgentOS Enterprise',
+          provider: 'gemini',
+          api_key: '',
+          markup_multiplier: 4.0,
+          allow_byok: true,
+          payment_instructions: 'التحويل عبر InstaPay أو حساب الشركة البنكي ثم إدخال رقم المرجع للاعتماد الفوري من لوحة المالك.'
+        },
+        plans: DEFAULT_PLANS,
+        users: [
+          {
+            id: 1,
+            email: 'admin@nexus-os.io',
+            pw_hash: adminHash,
+            full_name: 'مالك المنصة (Super Admin)',
+            company_name: 'Nexus Core HQ',
+            role: 'super_admin',
+            is_active: true,
+            plan_id: 4,
+            credits: 999999,
+            spent_credits: 0,
+            byok_provider: 'gemini',
+            byok_key: '',
+            created_at: new Date().toISOString()
+          }
+        ],
+        vouchers: [
+          { code: 'PRO2026', plan_id: 2, bonus_credits: 1000, max_uses: 100, used_by: [] },
+          { code: 'VIPSWARM', plan_id: 3, bonus_credits: 5000, max_uses: 50, used_by: [] }
+        ],
+        invoices: [],
+        txs: [],
+        agents: [
+          {
+            id: 101,
+            user_id: 1,
+            name: 'المحلل المالي الكمي (Quant)',
+            role_title: 'محلل مخاطر وعوائد',
+            domain: 'المالية والاستثمار',
+            model: 'gemini-2.5-flash',
+            system_prompt: MARKETPLACE_TEMPLATES[0].system_prompt,
+            tools: ['python_eval', 'memory_kv'],
+            can_delegate: true,
+            webhook_secret: 'whsec_' + randHex(10),
+            runs: 0,
+            tokens: 0
+          },
+          {
+            id: 102,
+            user_id: 1,
+            name: 'مخطط النمو والتسعير (Growth)',
+            role_title: 'خبير اقتصاديات SaaS',
+            domain: 'التجارة والنمو',
+            model: 'gemini-2.5-flash',
+            system_prompt: MARKETPLACE_TEMPLATES[2].system_prompt,
+            tools: ['python_eval', 'memory_kv'],
+            can_delegate: true,
+            webhook_secret: 'whsec_' + randHex(10),
+            runs: 0,
+            tokens: 0
+          }
+        ],
+        custom_tools: [],
+        memories: {},
+        dev_keys: [],
+        missions: [],
+        session_user_id: null
+      };
+      saveStore();
     }
 
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {}
+    function saveStore() {
+      localStorage.setItem(DB_KEY, JSON.stringify(state));
     }
 
-    function escapeHtml(str) {
-      return String(str ?? '')
+    function currentUser() {
+      if (!state.session_user_id) return null;
+      return state.users.find(u => u.id === state.session_user_id && u.is_active) || null;
+    }
+
+    function userPlan(u) {
+      if (!u) return DEFAULT_PLANS[0];
+      if (u.role === 'super_admin') return state.plans[3];
+      return state.plans.find(p => p.id === u.plan_id) || state.plans[0];
+    }
+
+    function effectiveLlm(u) {
+      if (u && state.config.allow_byok && u.byok_key && u.byok_key.trim().length > 8) {
+        return { provider: u.byok_provider || 'gemini', key: u.byok_key.trim(), isByok: true };
+      }
+      if (state.config.api_key && state.config.api_key.trim().length > 8) {
+        return { provider: state.config.provider || 'gemini', key: state.config.api_key.trim(), isByok: false };
+      }
+      return null;
+    }
+
+    function flash(notice = '', error = '') {
+      ui.notice = notice;
+      ui.error = error;
+      render();
+    }
+
+    function esc(s) {
+      return String(s ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
 
-    function switchTab(tab) {
-      activeTab = tab;
-      ['command', 'studio', 'missions', 'tools', 'saas'].forEach((t) => {
-        const el = document.getElementById('view-' + t);
-        if (el) el.classList.toggle('hidden', t !== tab);
-      });
-      document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
-        const isAct = btn.getAttribute('data-tab') === tab;
-        btn.className = 'nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition ' +
-          (isAct ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]');
-      });
-      renderAll();
+    // ==================== SAFE REAL TOOLS ====================
+    function safeMathEval(expr) {
+      const cleaned = String(expr || '').replace(/\^/g, '**').trim();
+      if (!/^[0-9+\-*/().,%\s*a-zA-Z_]+$/.test(cleaned)) {
+        return 'خطأ: تعبير رياضي غير مسموح به أمنياً.';
+      }
+      const allowed = {
+        abs: Math.abs, round: Math.round, min: Math.min, max: Math.max,
+        pow: Math.pow, sqrt: Math.sqrt, log: Math.log, exp: Math.exp,
+        floor: Math.floor, ceil: Math.ceil, PI: Math.PI, E: Math.E
+      };
+      const keys = Object.keys(allowed);
+      const vals = Object.values(allowed);
+      try {
+        const fn = new Function(...keys, '"use strict"; return (' + cleaned + ');');
+        const res = fn(...vals);
+        return JSON.stringify({ expression: expr, result: res });
+      } catch (err) {
+        return 'خطأ في الحساب: ' + err.message;
+      }
     }
 
-    function renderAll() {
-      document.getElementById('brand-title').textContent = state.settings.brand || 'Nexus AgentOS';
-      document.getElementById('sidebar-provider').textContent = state.settings.provider === 'simulation' ? 'Autonomous Core' : state.settings.provider;
-      document.getElementById('badge-agents').textContent = state.agents.length;
-      document.getElementById('badge-missions').textContent = state.missions.length;
-      document.getElementById('badge-tools').textContent = state.tools.length;
-
-      renderCommandCenter();
-      renderStudio();
-      renderMissionControl();
-      renderTools();
-      renderSaas();
-    }
-
-    function renderCommandCenter() {
-      const workers = state.agents.filter((a) => !a.is_system_agent);
-      const domains = Array.from(new Set(workers.map((a) => a.domain)));
-      const agentRev = workers.reduce((s, a) => s + Number(a.total_revenue_usd || 0), 0);
-      const apiCost = state.agents.reduce((s, a) => s + Number(a.total_cost_usd || 0), 0);
-      const mrr = state.clients.reduce((s, c) => s + Number(c.fee || 0), 0);
-      const gross = agentRev + mrr;
-      const net = gross - apiCost;
-      const margin = gross > 0 ? ((net / gross) * 100).toFixed(2) : '100.00';
-      const totalRuns = workers.reduce((s, a) => s + Number(a.total_runs || 0), 0);
-
-      document.getElementById('kpi-grid').innerHTML = `
-        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
-          <div class="text-xs text-[var(--muted-foreground)]">صافي الربح الإجمالي</div>
-          <div class="font-mono text-xl font-bold text-[var(--success)] mt-1">$${net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-1">هامش الربح: <span class="font-mono">${margin}%</span></div>
-        </div>
-        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
-          <div class="text-xs text-[var(--muted-foreground)]">عوائد مهام الوكلاء الذاتية</div>
-          <div class="font-mono text-xl font-bold mt-1">$${agentRev.toFixed(2)}</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-1"><span class="font-mono">${totalRuns}</span> مهمة مكتملة</div>
-        </div>
-        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
-          <div class="text-xs text-[var(--muted-foreground)]">اشتراك عملاء الـ SaaS الشهري</div>
-          <div class="font-mono text-xl font-bold mt-1">$${mrr.toFixed(2)}</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-1"><span class="font-mono">${state.clients.length}</span> شركات مشتركة</div>
-        </div>
-        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
-          <div class="text-xs text-[var(--muted-foreground)]">الأسطول والقطاعات النشطة</div>
-          <div class="font-mono text-xl font-bold mt-1">${state.agents.length}</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-1">في <span class="font-mono">${domains.length}</span> مجالات | <span class="font-mono">${state.tools.length}</span> أدوات</div>
-        </div>
-        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
-          <div class="text-xs text-[var(--muted-foreground)]">إجمالي تكلفة التوكنز (API)</div>
-          <div class="font-mono text-xl font-bold mt-1">$${apiCost.toFixed(4)}</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-1">تحت رقابة CFO الآلية</div>
-        </div>
-      `;
-
-      const domMap = {};
-      workers.forEach((a) => {
-        if (!domMap[a.domain]) domMap[a.domain] = { domain: a.domain, count: 0, runs: 0, rev: 0, cost: 0 };
-        domMap[a.domain].count += 1;
-        domMap[a.domain].runs += Number(a.total_runs || 0);
-        domMap[a.domain].rev += Number(a.total_revenue_usd || 0);
-        domMap[a.domain].cost += Number(a.total_cost_usd || 0);
-      });
-      const domList = Object.values(domMap).sort((a, b) => b.rev - a.rev);
-      document.getElementById('domains-table-body').innerHTML = domList.map((d) => `
-        <tr>
-          <td class="py-2.5 px-4 font-semibold">${escapeHtml(d.domain)}</td>
-          <td class="py-2.5 px-3 font-mono">${d.count}</td>
-          <td class="py-2.5 px-3 font-mono">${d.runs}</td>
-          <td class="py-2.5 px-3 font-mono text-[var(--muted-foreground)]">$${d.cost.toFixed(4)}</td>
-          <td class="py-2.5 px-4 font-mono font-bold text-[var(--success)]">$${d.rev.toFixed(2)}</td>
-        </tr>
-      `).join('');
-
-      document.getElementById('recent-missions-body').innerHTML = state.missions.slice(0, 7).map((m) => `
-        <tr>
-          <td class="py-2.5 px-4 font-semibold">${escapeHtml(m.title)}</td>
-          <td class="py-2.5 px-3">
-            <span class="px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">${m.mode === 'swarm' ? 'تكامل جماعي' : 'مستقل'}</span>
-          </td>
-          <td class="py-2.5 px-3 font-mono font-bold text-[var(--success)]">+$${Number(m.net_profit_usd).toFixed(2)}</td>
-          <td class="py-2.5 px-3">
-            <button data-inspect="${m.id}" class="inspect-mission-btn px-2 py-1 rounded bg-[var(--secondary)] hover:opacity-80">فحص ↖</button>
-          </td>
-        </tr>
-      `).join('');
-
-      document.querySelectorAll('.inspect-mission-btn').forEach((btn) => {
-        btn.onclick = () => {
-          inspectedMissionId = Number(btn.getAttribute('data-inspect'));
-          switchTab('missions');
-        };
-      });
-    }
-
-    function renderStudio() {
-      const allDomains = Array.from(new Set(state.agents.map((a) => a.domain)));
-      const chipsHtml = [
-        `<button data-dom="all" class="dom-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] ${studioDomain === 'all' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--card)]'}">كل المجالات (${state.agents.length})</button>`
-      ].concat(
-        allDomains.map((d) => `
-          <button data-dom="${escapeHtml(d)}" class="dom-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] ${studioDomain === d ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--card)]'}">${escapeHtml(d)}</button>
-        `)
-      ).join('');
-      document.getElementById('domain-filter-chips').innerHTML = chipsHtml;
-      document.querySelectorAll('.dom-chip').forEach((b) => {
-        b.onclick = () => {
-          studioDomain = b.getAttribute('data-dom');
-          renderStudio();
-        };
-      });
-
-      const toolsBySlug = {};
-      state.tools.forEach((t) => { toolsBySlug[t.slug] = t.name; });
-
-      const filtered = state.agents.filter((a) => {
-        if (studioDomain !== 'all' && a.domain !== studioDomain) return false;
-        if (studioSearch.trim()) {
-          const q = studioSearch.toLowerCase();
-          const hay = `${a.name} ${a.role_title} ${a.domain} ${a.description}`.toLowerCase();
-          if (!hay.includes(q)) return false;
+    async function executeToolCall(u, agent, toolName, args, depth) {
+      if (toolName === 'python_eval') {
+        return safeMathEval(args.expression || '');
+      }
+      if (toolName === 'memory_kv') {
+        const bucketKey = u.id + '::' + (args.key || 'default');
+        if (args.action === 'write') {
+          state.memories[bucketKey] = String(args.value || '');
+          saveStore();
+          return JSON.stringify({ stored: true, key: args.key, value: state.memories[bucketKey] });
         }
-        return true;
+        return JSON.stringify({ key: args.key, value: state.memories[bucketKey] || null });
+      }
+      if (toolName === 'delegate_to_colleague' && depth < 1) {
+        const target = state.agents.find(a => a.user_id === u.id && a.id === Number(args.colleague_agent_id));
+        if (!target) return 'الوكيل الزميل غير موجود في مساحتك.';
+        const sub = await runReActAgent(u, target, String(args.sub_task || ''), [], depth + 1);
+        return `[مخرجات الزميل ${target.name}]:\n${sub.text}`;
+      }
+      const custom = state.custom_tools.find(t => t.user_id === u.id && t.slug === toolName);
+      if (custom) {
+        try {
+          const opts = { method: custom.method || 'POST', headers: { 'Content-Type': 'application/json' } };
+          if (opts.method !== 'GET') opts.body = JSON.stringify(args || {});
+          const r = await fetch(custom.url, opts);
+          const txt = await r.text();
+          return txt.slice(0, 2000);
+        } catch (e) {
+          return 'فشل الاتصال بنقطة HTTP الخارجية: ' + e.message;
+        }
+      }
+      return 'أداة غير معروفة: ' + toolName;
+    }
+
+    function buildOpenAiToolsSchema(u, agent, allowDelegate) {
+      const schemas = [];
+      for (const slug of (agent.tools || [])) {
+        if (slug === 'python_eval') {
+          schemas.push({
+            type: 'function',
+            function: {
+              name: 'python_eval',
+              description: 'حاسبة رياضية ومالية دقيقة لحساب النسب والعوائد والتدفقات النقدية.',
+              parameters: {
+                type: 'object',
+                properties: { expression: { type: 'string', description: 'التعبير الرياضي مثل 250000 * pow(1.12, 3)' } },
+                required: ['expression']
+              }
+            }
+          });
+        } else if (slug === 'memory_kv') {
+          schemas.push({
+            type: 'function',
+            function: {
+              name: 'memory_kv',
+              description: 'قراءة أو كتابة معلومة في الذاكرة الدائمة للوكيل.',
+              parameters: {
+                type: 'object',
+                properties: {
+                  action: { type: 'string', enum: ['read', 'write'] },
+                  key: { type: 'string' },
+                  value: { type: 'string' }
+                },
+                required: ['action', 'key']
+              }
+            }
+          });
+        } else {
+          const ct = state.custom_tools.find(t => t.user_id === u.id && t.slug === slug);
+          if (ct) {
+            schemas.push({
+              type: 'function',
+              function: {
+                name: ct.slug,
+                description: ct.description || ct.name,
+                parameters: { type: 'object', properties: { payload: { type: 'string' } } }
+              }
+            });
+          }
+        }
+      }
+      if (allowDelegate && agent.can_delegate) {
+        const peers = state.agents.filter(a => a.user_id === u.id && a.id !== agent.id);
+        if (peers.length > 0) {
+          const peerDesc = peers.map(p => `${p.id}: ${p.name} (${p.domain})`).join(' | ');
+          schemas.push({
+            type: 'function',
+            function: {
+              name: 'delegate_to_colleague',
+              description: 'تفويض مهمة فرعية لزميل متخصص في نفس مساحة العمل: ' + peerDesc,
+              parameters: {
+                type: 'object',
+                properties: {
+                  colleague_agent_id: { type: 'integer', description: 'معرف الزميل الرقمي' },
+                  sub_task: { type: 'string', description: 'المهمة الفرعية المطلوبة بدقة' }
+                },
+                required: ['colleague_agent_id', 'sub_task']
+              }
+            }
+          });
+        }
+      }
+      return schemas;
+    }
+
+    async function callProviderChat(llm, modelName, messages, toolsSchema) {
+      let url = 'https://openrouter.ai/api/v1/chat/completions';
+      let resolvedModel = modelName || 'google/gemini-2.5-flash';
+      if (llm.provider === 'gemini') {
+        url = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        resolvedModel = resolvedModel.includes('/') ? resolvedModel.split('/').pop() : resolvedModel;
+        if (!resolvedModel.startsWith('gemini')) resolvedModel = 'gemini-2.5-flash';
+      } else if (llm.provider === 'openai') {
+        url = 'https://api.openai.com/v1/chat/completions';
+        resolvedModel = resolvedModel.includes('gpt') ? resolvedModel.replace('openai/', '') : 'gpt-4o-mini';
+      }
+
+      const body = { model: resolvedModel, messages, temperature: 0.35 };
+      if (toolsSchema && toolsSchema.length > 0) {
+        body.tools = toolsSchema;
+        body.tool_choice = 'auto';
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + llm.key
+        },
+        body: JSON.stringify(body)
       });
 
-      document.getElementById('agents-grid').innerHTML = filtered.map((a) => `
-        <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col justify-between gap-3">
-          <div class="space-y-2">
-            <div class="flex items-start justify-between gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)]">${escapeHtml(a.domain)}</span>
-              <span class="font-mono text-xs font-bold text-[var(--success)]">$${a.price_per_run}/مهمة</span>
-            </div>
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`خطأ من مزود النموذج (${res.status}): ${errText.slice(0, 220)}`);
+      }
+      return await res.json();
+    }
+
+    async function runReActAgent(u, agent, promptText, traceSteps, depth = 0) {
+      const llm = effectiveLlm(u);
+      if (!llm) throw new Error('لم يتم ربط مفتاح API بعد. اربط مفتاح Gemini أو OpenRouter أو OpenAI أولاً.');
+
+      const toolsSchema = buildOpenAiToolsSchema(u, agent, depth === 0);
+      const messages = [
+        { role: 'system', content: `${agent.system_prompt}\n\nاسمك: ${agent.name} | تخصصك: ${agent.domain}` },
+        { role: 'user', content: promptText }
+      ];
+
+      let promptTokens = 0;
+      let completionTokens = 0;
+
+      for (let iter = 0; iter < 4; iter++) {
+        const t0 = performance.now();
+        const data = await callProviderChat(llm, agent.model, messages, toolsSchema);
+        const dt = Math.round(performance.now() - t0);
+        promptTokens += Number(data?.usage?.prompt_tokens || 120);
+        completionTokens += Number(data?.usage?.completion_tokens || 180);
+
+        const msg = data?.choices?.[0]?.message;
+        if (!msg) throw new Error('استجابة فارغة من النموذج.');
+
+        if (msg.tool_calls && msg.tool_calls.length > 0) {
+          messages.push(msg);
+          for (const tc of msg.tool_calls) {
+            const fnName = tc.function?.name || '';
+            let parsedArgs = {};
+            try { parsedArgs = JSON.parse(tc.function?.arguments || '{}'); } catch (_) {}
+            const tTool = performance.now();
+            const toolOut = await executeToolCall(u, agent, fnName, parsedArgs, depth);
+            const dtTool = Math.round(performance.now() - tTool);
+            traceSteps.push({
+              agent_name: agent.name,
+              kind: fnName === 'delegate_to_colleague' ? 'delegation' : 'tool_call',
+              tool_name: fnName,
+              input: JSON.stringify(parsedArgs),
+              output: toolOut,
+              ms: dtTool
+            });
+            messages.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: String(toolOut)
+            });
+          }
+          continue;
+        }
+
+        const finalContent = msg.content || '';
+        traceSteps.push({
+          agent_name: agent.name,
+          kind: 'final_answer',
+          tool_name: '',
+          input: promptText.slice(0, 140),
+          output: finalContent.slice(0, 300),
+          ms: dt
+        });
+        agent.runs = (agent.runs || 0) + 1;
+        agent.tokens = (agent.tokens || 0) + promptTokens + completionTokens;
+        return { text: finalContent, promptTokens, completionTokens, isByok: llm.isByok };
+      }
+      return { text: 'اكتمل الحد الأقصى لحلقات الاستدلال.', promptTokens, completionTokens, isByok: llm.isByok };
+    }
+
+    // ==================== ACTIONS ====================
+    window.doLogin = async (ev) => {
+      ev.preventDefault();
+      const email = document.getElementById('login_email').value.trim().toLowerCase();
+      const pw = document.getElementById('login_pw').value;
+      const hash = await sha256Hex(pw);
+      const found = state.users.find(u => u.email.toLowerCase() === email && u.pw_hash === hash);
+      if (!found) return flash('', 'بيانات البريد الإلكتروني أو كلمة المرور غير صحيحة.');
+      if (!found.is_active) return flash('', 'هذا الحساب موقوف مؤقتاً من إدارة المنصة.');
+      state.session_user_id = found.id;
+      ui.tab = 'dashboard';
+      saveStore();
+      flash('تم تسجيل الدخول بنجاح إلى مساحتك المشفرة.');
+    };
+
+    window.fillAdminDemo = () => {
+      ui.authMode = 'login';
+      render();
+      setTimeout(() => {
+        const e = document.getElementById('login_email');
+        const p = document.getElementById('login_pw');
+        if (e && p) { e.value = 'admin@nexus-os.io'; p.value = 'Admin@2026!'; }
+      }, 20);
+    };
+
+    window.doRegister = async (ev) => {
+      ev.preventDefault();
+      const full_name = document.getElementById('reg_name').value.trim();
+      const company_name = document.getElementById('reg_company').value.trim();
+      const email = document.getElementById('reg_email').value.trim().toLowerCase();
+      const pw = document.getElementById('reg_pw').value;
+      if (pw.length < 6) return flash('', 'يجب ألا تقل كلمة المرور عن 6 أحرف.');
+      if (state.users.some(u => u.email.toLowerCase() === email)) {
+        return flash('', 'هذا البريد الإلكتروني مسجل مسبقاً.');
+      }
+      const pw_hash = await sha256Hex(pw);
+      const newId = Date.now();
+      const newUser = {
+        id: newId,
+        email,
+        pw_hash,
+        full_name,
+        company_name,
+        role: 'subscriber',
+        is_active: true,
+        plan_id: 1,
+        credits: 250,
+        spent_credits: 0,
+        byok_provider: 'gemini',
+        byok_key: '',
+        created_at: new Date().toISOString()
+      };
+      state.users.push(newUser);
+      state.txs.unshift({
+        id: Date.now() + 1,
+        user_id: newId,
+        type: 'signup_grant',
+        delta: 250,
+        balance_after: 250,
+        api_cost_usd: 0,
+        profit_usd: 0,
+        note: 'رصيد ترحيبي للباقة التجريبية Free Trial',
+        at: new Date().toISOString()
+      });
+      state.session_user_id = newId;
+      ui.tab = 'dashboard';
+      saveStore();
+      flash('تم إنشاء حسابك المستقل وتفعيل 250 نقطة مجانية.');
+    };
+
+    window.doLogout = () => {
+      state.session_user_id = null;
+      ui.notice = '';
+      ui.error = '';
+      saveStore();
+      render();
+    };
+
+    window.installTemplate = (tplId) => {
+      const u = currentUser();
+      const p = userPlan(u);
+      const myCount = state.agents.filter(a => a.user_id === u.id).length;
+      if (u.role !== 'super_admin' && p.max_agents >= 0 && myCount >= p.max_agents) {
+        return flash('', `وصلت للحد الأقصى للوكلاء في باقتك الحالية (${p.max_agents}). قم بترقية الباقة من قسم الاشتراك.`);
+      }
+      const tpl = MARKETPLACE_TEMPLATES.find(t => t.tpl_id === tplId);
+      if (!tpl) return;
+      if (u.role !== 'super_admin' && tpl.fee > 0) {
+        if (u.credits < tpl.fee) return flash('', 'رصيد نقاطك غير كافٍ لتثبيت هذا القالب.');
+        u.credits -= tpl.fee;
+        u.spent_credits += tpl.fee;
+      }
+      state.agents.unshift({
+        id: Date.now(),
+        user_id: u.id,
+        name: tpl.name,
+        role_title: tpl.role_title,
+        domain: tpl.domain,
+        model: tpl.model,
+        system_prompt: tpl.system_prompt,
+        tools: [...tpl.tools],
+        can_delegate: tpl.can_delegate,
+        webhook_secret: 'whsec_' + randHex(10),
+        runs: 0,
+        tokens: 0
+      });
+      saveStore();
+      flash(`تم تثبيت "${tpl.name}" في مساحتك المعزولة.`);
+    };
+
+    window.createCustomAgent = (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      const p = userPlan(u);
+      const myCount = state.agents.filter(a => a.user_id === u.id).length;
+      if (u.role !== 'super_admin' && p.max_agents >= 0 && myCount >= p.max_agents) {
+        return flash('', `تجاوزت حد الوكلاء المسموح في باقتك (${p.max_agents}). قم بالترقية لإضافة وكلاء أكثر.`);
+      }
+      const name = document.getElementById('ag_name').value.trim();
+      const role_title = document.getElementById('ag_role').value.trim();
+      const domain = document.getElementById('ag_domain').value.trim() || 'عام';
+      const model = document.getElementById('ag_model').value;
+      const system_prompt = document.getElementById('ag_prompt').value.trim();
+      const can_delegate = document.getElementById('ag_delegate').checked;
+      const checkedTools = Array.from(document.querySelectorAll('.ag-tool-cb:checked')).map(el => el.value);
+
+      state.agents.unshift({
+        id: Date.now(),
+        user_id: u.id,
+        name,
+        role_title,
+        domain,
+        model,
+        system_prompt,
+        tools: checkedTools,
+        can_delegate,
+        webhook_secret: 'whsec_' + randHex(10),
+        runs: 0,
+        tokens: 0
+      });
+      ui.showAgentModal = false;
+      saveStore();
+      flash(`تم بناء الوكيل "${name}" بنجاح في مجال "${domain}".`);
+    };
+
+    window.deleteAgent = (id) => {
+      const u = currentUser();
+      state.agents = state.agents.filter(a => !(a.id === id && a.user_id === u.id));
+      saveStore();
+      render();
+    };
+
+    window.toggleMissionAgent = (id) => {
+      if (ui.missionMode === 'standalone') {
+        ui.selectedAgentIds = [id];
+      } else {
+        if (ui.selectedAgentIds.includes(id)) {
+          ui.selectedAgentIds = ui.selectedAgentIds.filter(x => x !== id);
+        } else {
+          ui.selectedAgentIds.push(id);
+        }
+      }
+      render();
+    };
+
+    window.launchMission = async (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      const p = userPlan(u);
+      const goal = document.getElementById('mission_goal').value.trim();
+      if (!goal) return flash('', 'اكتب الهدف التنفيذي للمهمة أولاً.');
+
+      const myAgents = state.agents.filter(a => a.user_id === u.id);
+      const chosen = myAgents.filter(a => ui.selectedAgentIds.includes(a.id));
+      if (chosen.length === 0) return flash('', 'اختر وكيلاً واحداً على الأقل لتشغيل المهمة.');
+
+      if (ui.missionMode !== 'standalone' && u.role !== 'super_admin' && !p.allow_swarm) {
+        return flash('', 'تشغيل فرق السرب المتكاملة (Swarm) متاح بدءاً من باقة المحترفين (Pro Builder). استخدم كود PRO2026 أو قم بالترقية.');
+      }
+      if (u.role !== 'super_admin' && u.credits <= 1) {
+        return flash('', 'رصيد نقاطك غير كافٍ لتشغيل المهمة. اشحن رصيدك أو استبدل قسيمة.');
+      }
+
+      ui.busy = true;
+      ui.error = '';
+      ui.notice = 'جارٍ الاتصال الفعلي بالنموذج وتنفيذ حلقات الاستدلال والأدوات (ReAct)...';
+      render();
+
+      const traceSteps = [];
+      let totalPrompt = 0;
+      let totalComp = 0;
+      let finalOut = '';
+      let usedByok = false;
+
+      try {
+        if (ui.missionMode === 'standalone') {
+          const r = await runReActAgent(u, chosen[0], goal, traceSteps, 0);
+          finalOut = r.text;
+          totalPrompt += r.promptTokens;
+          totalComp += r.completionTokens;
+          usedByok = r.isByok;
+        } else {
+          let handoffContext = `الهدف الرئيسي للعميل:\n${goal}\n`;
+          const sections = [];
+          for (let i = 0; i < chosen.length; i++) {
+            const ag = chosen[i];
+            const promptForStage = i === 0
+              ? goal
+              : `${handoffContext}\n\nبصفتك (${ag.name} - ${ag.domain})، ابنِ على مخرجات زملائك السابقة وأضف مساهمتك التخصصية الدقيقة:`;
+            const r = await runReActAgent(u, ag, promptForStage, traceSteps, 0);
+            totalPrompt += r.promptTokens;
+            totalComp += r.completionTokens;
+            usedByok = r.isByok;
+            sections.push(`### [${i + 1}] ${ag.name} (${ag.domain})\n${r.text}`);
+            handoffContext += `\n---\nمخرجات ${ag.name}:\n${r.text}\n`;
+          }
+          finalOut = sections.join('\n\n---\n\n');
+        }
+
+        const apiCostUsd = ((totalPrompt * 0.0003) + (totalComp * 0.0012)) / 1000;
+        const markup = Number(state.config.markup_multiplier || 4.0);
+        const creditsCharged = (u.role === 'super_admin' || usedByok)
+          ? 0
+          : Math.max(1, Number(((apiCostUsd * markup) * 1000).toFixed(2)));
+        const profitUsd = usedByok || u.role === 'super_admin' ? 0 : Math.max(0, (creditsCharged / 1000) - apiCostUsd);
+
+        if (creditsCharged > 0) {
+          u.credits = Math.max(0, Number((u.credits - creditsCharged).toFixed(2)));
+          u.spent_credits = Number((u.spent_credits + creditsCharged).toFixed(2));
+          state.txs.unshift({
+            id: Date.now(),
+            user_id: u.id,
+            type: 'mission_usage',
+            delta: -creditsCharged,
+            balance_after: u.credits,
+            api_cost_usd: apiCostUsd,
+            profit_usd: profitUsd,
+            note: `تشغيل مهمة (${ui.missionMode}) — ${totalPrompt + totalComp} توكن`,
+            at: new Date().toISOString()
+          });
+        }
+
+        const mRec = {
+          id: Date.now() + 2,
+          user_id: u.id,
+          title: goal.slice(0, 65),
+          mode: ui.missionMode,
+          status: 'completed',
+          output: finalOut,
+          tokens: totalPrompt + totalComp,
+          api_cost_usd: apiCostUsd,
+          credits_charged: creditsCharged,
+          steps: traceSteps,
+          at: new Date().toISOString()
+        };
+        state.missions.unshift(mRec);
+        ui.selectedMissionId = mRec.id;
+        ui.busy = false;
+        saveStore();
+        flash(`اكتملت المهمة بنجاح (${mRec.tokens} توكن | خصم ${creditsCharged} نقطة).`);
+      } catch (err) {
+        ui.busy = false;
+        flash('', err.message || 'فشل التنفيذ الفعلي.');
+      }
+    };
+
+    window.redeemVoucher = (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      const code = document.getElementById('voucher_input').value.trim().toUpperCase();
+      const v = state.vouchers.find(x => x.code === code);
+      if (!v) return flash('', 'كود القسيمة غير صحيح.');
+      if (v.used_by.includes(u.id)) return flash('', 'لقد قمت باستخدام هذه القسيمة مسبقاً.');
+      if (v.used_by.length >= v.max_uses) return flash('', 'استُنفد الحد الأقصى لهذه القسيمة.');
+
+      v.used_by.push(u.id);
+      let planMsg = '';
+      if (v.plan_id) {
+        u.plan_id = v.plan_id;
+        const pl = state.plans.find(p => p.id === v.plan_id);
+        if (pl) {
+          u.credits += pl.credits;
+          planMsg = ` وترقية باقتك إلى "${pl.name_ar}"`;
+        }
+      }
+      u.credits += v.bonus_credits;
+      state.txs.unshift({
+        id: Date.now(),
+        user_id: u.id,
+        type: 'voucher_redeem',
+        delta: v.bonus_credits,
+        balance_after: u.credits,
+        api_cost_usd: 0,
+        profit_usd: 0,
+        note: `تفعيل قسيمة ${v.code}${planMsg}`,
+        at: new Date().toISOString()
+      });
+      saveStore();
+      flash(`تم تفعيل القسيمة ${v.code} بنجاح${planMsg}!`);
+    };
+
+    window.submitInvoiceRequest = (planId) => {
+      const u = currentUser();
+      const pl = state.plans.find(p => p.id === planId);
+      const refInput = prompt(`لترقية حسابك إلى "${pl.name_ar}" ($${pl.price}/شهرياً):\nأدخل رقم مرجع التحويل البنكي / InstaPay لإرساله لاعتماد المالك:`);
+      if (!refInput || !refInput.trim()) return;
+      const inv = {
+        id: Date.now(),
+        inv_no: 'INV-' + Math.floor(100000 + Math.random() * 900000),
+        user_id: u.id,
+        user_email: u.email,
+        plan_id: pl.id,
+        plan_name: pl.name_ar,
+        amount_usd: pl.price,
+        credits_to_grant: pl.credits,
+        reference: refInput.trim(),
+        status: 'pending',
+        at: new Date().toISOString()
+      };
+      state.invoices.unshift(inv);
+      saveStore();
+      flash(`تم إنشاء الفاتورة ${inv.inv_no} بحالة معلقة. سجل الدخول بحساب المالك (admin@nexus-os.io) لاعتمادها وتجربة دورة الدفع كاملة!`);
+    };
+
+    window.adminApproveInvoice = (invId) => {
+      const inv = state.invoices.find(i => i.id === invId);
+      if (!inv || inv.status !== 'pending') return;
+      inv.status = 'paid';
+      const targetUser = state.users.find(u => u.id === inv.user_id);
+      if (targetUser) {
+        targetUser.plan_id = inv.plan_id;
+        targetUser.credits += inv.credits_to_grant;
+        state.txs.unshift({
+          id: Date.now(),
+          user_id: targetUser.id,
+          type: 'invoice_paid',
+          delta: inv.credits_to_grant,
+          balance_after: targetUser.credits,
+          api_cost_usd: 0,
+          profit_usd: inv.amount_usd,
+          note: `اعتماد فاتورة ${inv.inv_no} (${inv.plan_name})`,
+          at: new Date().toISOString()
+        });
+      }
+      saveStore();
+      flash(`تم اعتماد الفاتورة ${inv.inv_no} وترقية باقة العميل وإضافة ${inv.credits_to_grant} نقطة لمحفظته.`);
+    };
+
+    window.saveByokSettings = (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      u.byok_provider = document.getElementById('byok_prov').value;
+      u.byok_key = document.getElementById('byok_key').value.trim();
+      saveStore();
+      flash('تم حفظ مفتاحك الخاص (BYOK) في مساحتك بنجاح.');
+    };
+
+    window.generateDevKey = (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      const p = userPlan(u);
+      if (u.role !== 'super_admin' && !p.allow_api) {
+        return flash('', 'توليد مفاتيح المطورين (sk_nexus_...) يتطلب باقة الشركات (Business Swarm) فأعلى. جرب قسيمة VIPSWARM!');
+      }
+      const label = document.getElementById('devkey_label').value.trim() || 'Production Server';
+      const rawKey = 'sk_nexus_' + randHex(16);
+      state.dev_keys.unshift({
+        id: Date.now(),
+        user_id: u.id,
+        label,
+        masked: rawKey.slice(0, 14) + '...' + rawKey.slice(-4),
+        full_once: rawKey,
+        at: new Date().toISOString()
+      });
+      saveStore();
+      flash(`تم توليد مفتاح API بنجاح: ${rawKey}`);
+    };
+
+    window.addCustomTool = (ev) => {
+      ev.preventDefault();
+      const u = currentUser();
+      const p = userPlan(u);
+      if (u.role !== 'super_admin' && !p.allow_custom_tools) {
+        return flash('', 'إضافة أدوات HTTP خارجية تتطلب باقة المحترفين فأعلى.');
+      }
+      const name = document.getElementById('ct_name').value.trim();
+      const slug = document.getElementById('ct_slug').value.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+      const url = document.getElementById('ct_url').value.trim();
+      const method = document.getElementById('ct_method').value;
+      const description = document.getElementById('ct_desc').value.trim();
+      state.custom_tools.push({ id: Date.now(), user_id: u.id, name, slug, url, method, description });
+      saveStore();
+      flash(`تم ربط الأداة الخارجية "${slug}" بمساحتك.`);
+    };
+
+    window.saveAdminEngine = async (ev) => {
+      ev.preventDefault();
+      state.config.provider = document.getElementById('adm_prov').value;
+      const k = document.getElementById('adm_key').value.trim();
+      if (k) state.config.api_key = k;
+      state.config.markup_multiplier = Number(document.getElementById('adm_markup').value || 4);
+      state.config.allow_byok = document.getElementById('adm_byok').checked;
+      saveStore();
+      flash('تم حفظ إعدادات محرك النماذج المركزي ومعامل الربح بنجاح.');
+    };
+
+    window.pingAdminLlm = async () => {
+      const prov = document.getElementById('adm_prov').value;
+      const typed = document.getElementById('adm_key').value.trim() || state.config.api_key;
+      if (!typed) return flash('', 'أدخل مفتاح API أولاً لاختبار الاتصال الفعلي.');
+      ui.busy = true;
+      render();
+      try {
+        const t0 = performance.now();
+        const data = await callProviderChat({ provider: prov, key: typed }, '', [{ role: 'user', content: 'أجب بكلمة واحدة فقط: متصل' }], []);
+        const ms = Math.round(performance.now() - t0);
+        const reply = data?.choices?.[0]?.message?.content || 'OK';
+        state.config.provider = prov;
+        state.config.api_key = typed;
+        saveStore();
+        ui.busy = false;
+        flash(`اتصال فعلي ناجح (${ms}ms) — رد النموذج: "${reply}"`);
+      } catch (e) {
+        ui.busy = false;
+        flash('', e.message);
+      }
+    };
+
+    window.createAdminVoucher = (ev) => {
+      ev.preventDefault();
+      const code = document.getElementById('v_code').value.trim().toUpperCase();
+      const plan_id = Number(document.getElementById('v_plan').value) || null;
+      const bonus_credits = Number(document.getElementById('v_credits').value || 500);
+      if (!code) return;
+      state.vouchers.unshift({ code, plan_id, bonus_credits, max_uses: 50, used_by: [] });
+      saveStore();
+      flash(`تم إصدار قسيمة الترقية "${code}" بنجاح.`);
+    };
+
+    // ==================== RENDER ====================
+    function renderAuthGate() {
+      return `
+        <div class="max-w-6xl mx-auto p-6 space-y-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-[var(--border)]">
             <div>
-              <h3 class="font-bold text-sm">${escapeHtml(a.name)}</h3>
-              <div class="text-xs text-[var(--muted-foreground)]">${escapeHtml(a.role_title)}</div>
+              <div class="text-xl font-bold">${esc(state.config.platform_name)}</div>
+              <div class="text-xs text-[var(--muted-foreground)]">نظام تشغيل وبيع اشتراكات وكلاء الذكاء الاصطناعي متعدد المستأجرين (Multi-Tenant SaaS)</div>
             </div>
-            <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(a.description)}</p>
-            <div class="flex flex-wrap gap-1 pt-1">
-              ${(a.installed_tools || []).map((sl) => `<span class="px-2 py-0.5 rounded text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)]">🔧 ${escapeHtml(toolsBySlug[sl] || sl)}</span>`).join('')}
+            <button onclick="fillAdminDemo()" class="px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-xs font-medium hover:opacity-90">
+              تعبئة دخول المالك (Super Admin) للتجربة الفورية
+            </button>
+          </div>
+
+          ${ui.error ? `<div class="p-3 rounded-lg border border-[var(--error)] text-[var(--error)] text-xs font-medium">${esc(ui.error)}</div>` : ''}
+          ${ui.notice ? `<div class="p-3 rounded-lg border border-[var(--success)] text-[var(--success)] text-xs font-medium">${esc(ui.notice)}</div>` : ''}
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-7 space-y-4">
+              <span class="inline-block px-2.5 py-1 rounded text-xs font-semibold bg-[var(--card)] border border-[var(--border)] text-[var(--primary)]">
+                بنية SaaS تجارية حقيقية — عزل مشتركين + باقات + ReAct Function Calling
+              </span>
+              <h1 class="text-2xl font-bold leading-snug">
+                أنشئ حساب مشترك أو ادخل كمالك المنصة لإدارة الوكلاء، السرب، الفواتير، وهامش الربح
+              </h1>
+              <p class="text-sm text-[var(--muted-foreground)] leading-relaxed">
+                كل مشترك يحصل على مساحة معزولة بالكامل، محفظة نقاط استهلاك، قوالب متجر جاهزة، إمكانية بناء وكلاء في أي مجال مخصص، وتفويض مهام متكامل بين الوكلاء عبر استدعاء دوال حقيقي بدون أي محاكاة وهمية.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
+                <div class="p-3.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+                  <div class="font-bold mb-1">بيانات مالك المنصة (Super Admin)</div>
+                  <div class="font-mono text-[var(--muted-foreground)]" dir="ltr">admin@nexus-os.io / Admin@2026!</div>
+                </div>
+                <div class="p-3.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+                  <div class="font-bold mb-1">قسائم ترقية فورية لتجربة حسابات العملاء</div>
+                  <div class="font-mono text-[var(--muted-foreground)]" dir="ltr">PRO2026  |  VIPSWARM</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 p-6 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-4">
+              <div class="grid grid-cols-2 gap-2 p-1 rounded-lg bg-[var(--background)] border border-[var(--border)] text-xs font-semibold">
+                <button onclick="ui.authMode='login';render()" class="py-2 rounded-md ${ui.authMode === 'login' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'text-[var(--muted-foreground)]'}">تسجيل الدخول</button>
+                <button onclick="ui.authMode='register';render()" class="py-2 rounded-md ${ui.authMode === 'register' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'text-[var(--muted-foreground)]'}">تسجيل مشترك جديد</button>
+              </div>
+
+              ${ui.authMode === 'login' ? `
+                <form onsubmit="doLogin(event)" class="space-y-3 text-xs">
+                  <div>
+                    <label class="block mb-1 font-semibold">البريد الإلكتروني</label>
+                    <input id="login_email" type="email" required placeholder="admin@nexus-os.io" dir="ltr" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">كلمة المرور</label>
+                    <input id="login_pw" type="password" required placeholder="••••••••" dir="ltr" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <button type="submit" class="w-full py-2.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">دخول إلى مساحة العمل</button>
+                </form>
+              ` : `
+                <form onsubmit="doRegister(event)" class="space-y-3 text-xs">
+                  <div>
+                    <label class="block mb-1 font-semibold">الاسم الكامل</label>
+                    <input id="reg_name" type="text" required placeholder="أحمد محمود" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">اسم الشركة / المؤسسة</label>
+                    <input id="reg_company" type="text" placeholder="شركة تقنية ناشئة" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">البريد الإلكتروني</label>
+                    <input id="reg_email" type="email" required placeholder="founder@company.com" dir="ltr" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">كلمة المرور (تُشفر بـ SHA-256)</label>
+                    <input id="reg_pw" type="password" required placeholder="6 أحرف على الأقل" dir="ltr" class="w-full px-3 py-2 rounded-md bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <button type="submit" class="w-full py-2.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">إنشاء حساب مشترك + 250 نقطة مجانية</button>
+                </form>
+              `}
             </div>
           </div>
 
-          <div class="pt-3 border-t border-[var(--card-border)] space-y-2.5">
-            <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-              <span>المهام: <strong class="font-mono text-[var(--foreground)]">${a.total_runs}</strong> | العائد: <strong class="font-mono text-[var(--success)]">$${Number(a.total_revenue_usd).toFixed(0)}</strong></span>
-              <span>${a.trigger_type === 'cron' ? 'جدولة Cron' : a.trigger_type === 'webhook' ? 'Webhook حي' : 'عند الطلب'}</span>
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-1.5">
-              ${!a.is_system_agent ? `
-                <div class="flex gap-1.5">
-                  <button data-runsolo="${a.id}" class="btn-run-solo px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">▶ تشغيل مستقل</button>
-                  <button data-addswarm="${a.id}" class="btn-add-swarm px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">دمج جماعي</button>
+          <div class="space-y-3">
+            <h2 class="text-base font-bold">باقات الاشتراك الشهرية المعتمدة في المنصة</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              ${state.plans.map(pl => `
+                <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col justify-between gap-3 text-xs">
+                  <div class="space-y-2">
+                    <div class="font-bold text-sm">${esc(pl.name_ar)}</div>
+                    <div class="text-xl font-bold font-mono" dir="ltr">$${pl.price}<span class="text-xs text-[var(--muted-foreground)]">/mo</span></div>
+                    <ul class="space-y-1 text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)]">
+                      <li>• رصيد شهري: <strong class="text-[var(--foreground)]">${pl.credits.toLocaleString()} cr</strong></li>
+                      <li>• حد الوكلاء: <strong class="text-[var(--foreground)]">${pl.max_agents < 0 ? 'غير محدود' : pl.max_agents}</strong></li>
+                      <li>• السرب المتكامل (Swarm): <strong>${pl.allow_swarm ? 'متاح' : 'غير متاح'}</strong></li>
+                      <li>• مفاتيح API للمطورين: <strong>${pl.allow_api ? 'متاح' : 'غير متاح'}</strong></li>
+                    </ul>
+                  </div>
                 </div>
-              ` : `<span class="text-xs text-[var(--warning)] font-semibold">وكيل نواة ورقابة ذاتية</span>`}
-              <div class="flex items-center gap-1">
-                <button data-clone="${a.id}" class="btn-clone px-2 py-1 rounded text-xs bg-[var(--secondary)]" title="استنساخ الوكيل">نسخ</button>
-                <button data-edit="${a.id}" class="btn-edit px-2 py-1 rounded text-xs bg-[var(--secondary)]" title="تعديل">تعديل</button>
-                ${!a.is_system_agent ? `<button data-del="${a.id}" class="btn-del px-2 py-1 rounded text-xs text-[var(--error)] bg-[var(--secondary)]" title="حذف">✕</button>` : ''}
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWorkspace(u) {
+      const pl = userPlan(u);
+      const llm = effectiveLlm(u);
+      const myAgents = state.agents.filter(a => a.user_id === u.id);
+      const myMissions = state.missions.filter(m => m.user_id === u.id);
+      const myTools = state.custom_tools.filter(t => t.user_id === u.id);
+      const myKeys = state.dev_keys.filter(k => k.user_id === u.id);
+      const myTxs = state.txs.filter(t => t.user_id === u.id);
+      const myInvoices = state.invoices.filter(i => i.user_id === u.id);
+
+      if (ui.selectedAgentIds.length === 0 && myAgents[0]) {
+        ui.selectedAgentIds = [myAgents[0].id];
+      }
+
+      let mainHtml = '';
+
+      if (ui.tab === 'dashboard') {
+        mainHtml = `
+          <div class="space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border)]">
+              <div>
+                <h1 class="text-lg font-bold">مرحباً، ${esc(u.full_name)} ${u.company_name ? '— ' + esc(u.company_name) : ''}</h1>
+                <p class="text-xs text-[var(--muted-foreground)]">مساحة عمل معزولة (Tenant ID #${u.id}) | الباقة الفعالة: ${esc(pl.name_ar)}</p>
+              </div>
+              <div class="flex gap-2 text-xs">
+                <button onclick="ui.tab='agents';ui.showAgentModal=true;render()" class="px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--card)] font-semibold">+ بناء وكيل جديد</button>
+                <button onclick="ui.tab='missions';render()" class="px-3 py-2 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold">إطلاق مهمة فعلية</button>
+              </div>
+            </div>
+
+            ${!llm ? `
+              <div class="p-4 rounded-xl border border-[var(--warning)] bg-[var(--card)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div>
+                  <div class="font-bold text-[var(--warning)] mb-0.5">مطلوب ربط مفتاح API للتشغيل الفعلي (بدون محاكاة)</div>
+                  <div class="text-[var(--muted-foreground)]">اربط مفتاح Google Gemini أو OpenRouter أو OpenAI لتشغيل حلقات ReAct والأدوات مباشرة.</div>
+                </div>
+                <button onclick="ui.tab='${u.role === 'super_admin' ? 'admin' : 'tools'}';ui.adminSubTab='engine';render()" class="px-3 py-2 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">إعداد المفتاح الآن</button>
+              </div>
+            ` : ''}
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-xs text-[var(--muted-foreground)]">رصيد المحفظة</div>
+                <div class="text-xl font-bold font-mono text-[var(--success)] mt-1">${u.credits.toLocaleString()} cr</div>
+                <div class="text-xs text-[var(--muted-foreground)] mt-1">المستهلك: ${u.spent_credits} cr</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-xs text-[var(--muted-foreground)]">وكلاؤك المعزولون</div>
+                <div class="text-xl font-bold font-mono mt-1">${myAgents.length} / ${u.role === 'super_admin' || pl.max_agents < 0 ? '∞' : pl.max_agents}</div>
+                <div class="text-xs text-[var(--muted-foreground)] mt-1">حسب صلاحية باقتك</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-xs text-[var(--muted-foreground)]">المهام المنفذة</div>
+                <div class="text-xl font-bold font-mono mt-1">${myMissions.length}</div>
+                <div class="text-xs text-[var(--muted-foreground)] mt-1">مستقل + سرب متكامل</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-xs text-[var(--muted-foreground)]">حالة محرك النماذج</div>
+                <div class="text-sm font-bold mt-2 ${llm ? 'text-[var(--success)]' : 'text-[var(--warning)]'}">${llm ? 'متصل (' + llm.provider.toUpperCase() + ')' : 'غير مربوط بعد'}</div>
+                <div class="text-xs text-[var(--muted-foreground)] mt-1">${llm?.isByok ? 'مفتاح العميل BYOK' : 'المحرك المركزي'}</div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-sm">آخر العمليات المنفذة في حسابك</div>
+                <button onclick="ui.tab='missions';render()" class="text-xs text-[var(--primary)] font-semibold">فتح غرفة العمليات ←</button>
+              </div>
+              ${myMissions.length === 0 ? `<div class="text-xs text-[var(--muted-foreground)] py-3">لا توجد مهام منفذة بعد. ثبّت وكيلاً من المتجر أو ابنِ وكيلك وأطلق أول مهمة.</div>` : `
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs text-right border-collapse">
+                    <thead>
+                      <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                        <th class="py-2">المهمة</th>
+                        <th class="py-2">النمط</th>
+                        <th class="py-2">التوكنز</th>
+                        <th class="py-2">النقاط المخصومة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${myMissions.slice(0, 5).map(m => `
+                        <tr class="border-b border-[var(--border)]">
+                          <td class="py-2 font-semibold">${esc(m.title)}</td>
+                          <td class="py-2 font-mono">${esc(m.mode)}</td>
+                          <td class="py-2 font-mono">${m.tokens}</td>
+                          <td class="py-2 font-mono">${m.credits_charged} cr</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+      } else if (ui.tab === 'agents') {
+        mainHtml = `
+          <div class="space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border)]">
+              <div>
+                <h1 class="text-lg font-bold">مصنع ومتجر الوكلاء (Agent Factory & Marketplace)</h1>
+                <p class="text-xs text-[var(--muted-foreground)]">الحد المسموح في باقتك: ${myAgents.length} من ${u.role === 'super_admin' || pl.max_agents < 0 ? 'غير محدود' : pl.max_agents} وكلاء</p>
+              </div>
+              <button onclick="ui.showAgentModal=!ui.showAgentModal;render()" class="px-3.5 py-2 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-bold">
+                ${ui.showAgentModal ? 'إغلاق النموذج' : '+ إنشاء وكيل مخصص في أي مجال'}
+              </button>
+            </div>
+
+            ${ui.showAgentModal ? `
+              <form onsubmit="createCustomAgent(event)" class="p-5 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3 text-xs">
+                <div class="font-bold text-sm mb-1">بناء وكيل متخصص جديد</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block mb-1 font-semibold">اسم الوكيل</label>
+                    <input id="ag_name" required placeholder="مستشار العقود القانونية" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">المسمى الوظيفي</label>
+                    <input id="ag_role" required placeholder="مدقق بنود ومخاطر تعاقدية" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                  <div>
+                    <label class="block mb-1 font-semibold">المجال (اكتب أي مجال حر)</label>
+                    <input id="ag_domain" required placeholder="القانون التجاري / الطب / اللوجستيات..." class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block mb-1 font-semibold">النموذج الأساسي</label>
+                    <select id="ag_model" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]">
+                      <option value="gemini-2.5-flash">Google Gemini 2.5 Flash</option>
+                      <option value="gemini-2.5-pro">Google Gemini 2.5 Pro</option>
+                      <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                      <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (OpenRouter)</option>
+                    </select>
+                  </div>
+                  <div class="flex items-end pb-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input id="ag_delegate" type="checkbox" checked />
+                      <span class="font-semibold">السماح بتفويض مهام فرعية لزملائه (Peer Delegation)</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block mb-1 font-semibold">الأدوات الفعلية المسموحة للوكيل</label>
+                  <div class="flex flex-wrap gap-3 p-2.5 rounded bg-[var(--background)] border border-[var(--border)]">
+                    <label class="flex items-center gap-1.5"><input type="checkbox" class="ag-tool-cb" value="python_eval" checked /> حاسبة بايثون الكمية (python_eval)</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" class="ag-tool-cb" value="memory_kv" checked /> ذاكرة دائمة (memory_kv)</label>
+                    ${myTools.map(ct => `<label class="flex items-center gap-1.5"><input type="checkbox" class="ag-tool-cb" value="${esc(ct.slug)}" checked /> ${esc(ct.name)} (${esc(ct.slug)})</label>`).join('')}
+                  </div>
+                </div>
+                <div>
+                  <label class="block mb-1 font-semibold">التعليمات النظامية العميقة (System Prompt)</label>
+                  <textarea id="ag_prompt" rows="3" required placeholder="أنت مستشار متخصص... حلل المعطيات بدقة واستخدم الأدوات المتاحة قبل إصدار التوصية النهائية." class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]"></textarea>
+                </div>
+                <button type="submit" class="px-4 py-2 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">حفظ الوكيل في مساحتي</button>
+              </form>
+            ` : ''}
+
+            <div class="space-y-3">
+              <h2 class="text-sm font-bold">وكلاؤك النشطون (${myAgents.length})</h2>
+              ${myAgents.length === 0 ? `<div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs text-[var(--muted-foreground)]">مساحتك فارغة حالياً. ثبّت قالباً جاهزاً من المتجر بالأسفل أو أنشئ وكيلك المخصص.</div>` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${myAgents.map(ag => `
+                    <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col justify-between gap-3 text-xs">
+                      <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="px-2 py-0.5 rounded bg-[var(--background)] border border-[var(--border)] font-semibold">${esc(ag.domain)}</span>
+                          <span class="font-mono text-[var(--muted-foreground)]">${esc(ag.model)}</span>
+                        </div>
+                        <div class="font-bold text-sm pt-1">${esc(ag.name)}</div>
+                        <div class="text-[var(--muted-foreground)]">${esc(ag.role_title)}</div>
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                          ${(ag.tools || []).map(t => `<span class="px-2 py-0.5 rounded bg-[var(--background)] font-mono">${esc(t)}</span>`).join('')}
+                          ${ag.can_delegate ? `<span class="px-2 py-0.5 rounded bg-[var(--background)] text-[var(--primary)]">يفوض الزملاء</span>` : ''}
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+                        <span class="font-mono text-[var(--muted-foreground)]">مرات التشغيل: ${ag.runs}</span>
+                        <div class="flex gap-2">
+                          <button onclick="ui.missionMode='standalone';ui.selectedAgentIds=[${ag.id}];ui.tab='missions';render()" class="px-2.5 py-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold">تشغيل</button>
+                          <button onclick="deleteAgent(${ag.id})" class="px-2 py-1 rounded border border-[var(--border)] text-[var(--error)]">حذف</button>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <h2 class="text-sm font-bold">متجر قوالب الوكلاء الجاهزة للتثبيت الفوري (Marketplace)</h2>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                ${MARKETPLACE_TEMPLATES.map(tpl => `
+                  <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-col justify-between gap-3 text-xs">
+                    <div class="space-y-1.5">
+                      <span class="px-2 py-0.5 rounded bg-[var(--background)] border border-[var(--border)]">${esc(tpl.domain)}</span>
+                      <div class="font-bold text-sm pt-1">${esc(tpl.name)}</div>
+                      <p class="text-[var(--muted-foreground)] leading-relaxed">${esc(tpl.description)}</p>
+                    </div>
+                    <button onclick="installTemplate('${tpl.tpl_id}')" class="w-full py-2 rounded-md border border-[var(--border)] bg-[var(--background)] font-bold hover:opacity-90">
+                      تثبيت في مساحتي (${tpl.fee === 0 ? 'مجاني' : tpl.fee + ' cr'})
+                    </button>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
-        </div>
-      `).join('');
-
-      document.querySelectorAll('.btn-run-solo').forEach((b) => {
-        b.onclick = () => {
-          mcMode = 'standalone';
-          mcSelectedIds = [Number(b.getAttribute('data-runsolo'))];
-          switchTab('missions');
-        };
-      });
-      document.querySelectorAll('.btn-add-swarm').forEach((b) => {
-        b.onclick = () => {
-          const id = Number(b.getAttribute('data-addswarm'));
-          mcMode = 'swarm';
-          mcStrategy = 'manual';
-          if (!mcSelectedIds.includes(id)) mcSelectedIds.push(id);
-          switchTab('missions');
-        };
-      });
-      document.querySelectorAll('.btn-clone').forEach((b) => {
-        b.onclick = () => {
-          const orig = state.agents.find((x) => x.id === Number(b.getAttribute('data-clone')));
-          if (!orig) return;
-          const nextId = Math.max(0, ...state.agents.map((x) => x.id)) + 1;
-          state.agents.unshift({
-            ...JSON.parse(JSON.stringify(orig)),
-            id: nextId,
-            name: orig.name + ' (نسخة)',
-            is_system_agent: false,
-            total_runs: 0,
-            total_cost_usd: 0,
-            total_revenue_usd: 0
-          });
-          saveState();
-          renderAll();
-        };
-      });
-      document.querySelectorAll('.btn-edit').forEach((b) => {
-        b.onclick = () => openAgentModal(Number(b.getAttribute('data-edit')));
-      });
-      document.querySelectorAll('.btn-del').forEach((b) => {
-        b.onclick = () => {
-          const id = Number(b.getAttribute('data-del'));
-          state.agents = state.agents.filter((x) => x.id !== id);
-          saveState();
-          renderAll();
-        };
-      });
-    }
-
-    function renderMissionControl() {
-      const activeClass = 'bg-[var(--primary)] text-[var(--primary-foreground)]';
-      const idleClass = 'bg-[var(--background)] text-[var(--foreground)]';
-
-      document.getElementById('mc-mode-swarm').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcMode === 'swarm' ? activeClass : idleClass}`;
-      document.getElementById('mc-mode-solo').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcMode === 'standalone' ? activeClass : idleClass}`;
-
-      document.getElementById('mc-strategy-box').classList.toggle('hidden', mcMode !== 'swarm');
-      document.getElementById('mc-strat-auto').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcStrategy === 'auto' ? activeClass : idleClass}`;
-      document.getElementById('mc-strat-manual').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcStrategy === 'manual' ? activeClass : idleClass}`;
-
-      const showPicker = mcMode === 'standalone' || mcStrategy === 'manual';
-      document.getElementById('mc-agent-picker-box').classList.toggle('hidden', !showPicker);
-      document.getElementById('mc-picker-label').textContent = mcMode === 'standalone' ? 'اختر الوكيل المستقل:' : `اختر الوكلاء المراد دمجهم بالترتيب (${mcSelectedIds.length} محدد):`;
-
-      const workers = state.agents.filter((a) => !a.is_system_agent);
-      document.getElementById('mc-agent-list').innerHTML = workers.map((a) => {
-        const checked = mcSelectedIds.includes(a.id);
-        return `
-          <label class="flex items-start gap-2 p-2 rounded-lg border border-[var(--border)] cursor-pointer text-xs ${checked ? 'bg-[var(--secondary)]' : 'bg-[var(--background)]'}">
-            <input type="${mcMode === 'standalone' ? 'radio' : 'checkbox'}" name="mc-ag-pick" value="${a.id}" ${checked ? 'checked' : ''} class="mt-0.5 accent-[var(--primary)]" />
-            <div>
-              <div class="font-semibold">${escapeHtml(a.name)}</div>
-              <div class="text-[var(--muted-foreground)]">${escapeHtml(a.domain)} — $${a.price_per_run}/مهمة</div>
-            </div>
-          </label>
         `;
-      }).join('');
+      } else if (ui.tab === 'missions') {
+        const activeMission = myMissions.find(m => m.id === ui.selectedMissionId) || myMissions[0] || null;
+        mainHtml = `
+          <div class="space-y-5">
+            <div class="pb-4 border-b border-[var(--border)]">
+              <h1 class="text-lg font-bold">غرفة العمليات الفعلية (Standalone ReAct & Multi-Agent Swarm)</h1>
+              <p class="text-xs text-[var(--muted-foreground)]">شغّل أي وكيل بمفرده (مع إمكانية استدعاء الأدوات وتفويض زملائه تلقائياً) أو شغّل عدة وكلاء كفريق سرب متسلسل يسلم المخرجات لبعضه.</p>
+            </div>
 
-      document.querySelectorAll('input[name="mc-ag-pick"]').forEach((inp) => {
-        inp.onchange = () => {
-          const id = Number(inp.value);
-          if (mcMode === 'standalone') {
-            mcSelectedIds = [id];
-          } else {
-            mcSelectedIds = mcSelectedIds.includes(id) ? mcSelectedIds.filter((x) => x !== id) : [...mcSelectedIds, id];
-          }
-          renderMissionControl();
-        };
-      });
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <form onsubmit="launchMission(event)" class="lg:col-span-5 p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-4 text-xs">
+                <div>
+                  <label class="block mb-1.5 font-bold">1. نمط التشغيل</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="ui.missionMode='standalone';ui.selectedAgentIds=ui.selectedAgentIds.slice(0,1);render()" class="py-2 px-2 rounded border border-[var(--border)] font-semibold ${ui.missionMode === 'standalone' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--background)]'}">
+                      وكيل مستقل (ReAct)
+                    </button>
+                    <button type="button" onclick="ui.missionMode='swarm_sequential';render()" class="py-2 px-2 rounded border border-[var(--border)] font-semibold ${ui.missionMode === 'swarm_sequential' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--background)]'}">
+                      فريق سرب متكامل (Swarm)
+                    </button>
+                  </div>
+                </div>
 
-      document.getElementById('mc-history-list').innerHTML = state.missions.slice(0, 8).map((m) => `
-        <button data-hist="${m.id}" class="hist-item w-full text-right px-2.5 py-1.5 rounded text-xs flex items-center justify-between ${inspectedMissionId === m.id ? 'bg-[var(--secondary)] font-semibold' : 'hover:bg-[var(--secondary)]'}">
-          <span class="truncate">#${m.id} — ${escapeHtml(m.title)}</span>
-          <span class="font-mono text-[var(--success)] shrink-0">+$${Number(m.net_profit_usd).toFixed(1)}</span>
-        </button>
-      `).join('');
+                <div>
+                  <label class="block mb-1.5 font-bold">2. اختر الوكلاء المشاركين (${ui.selectedAgentIds.length})</label>
+                  ${myAgents.length === 0 ? `<div class="text-[var(--muted-foreground)]">ثبّت وكيلاً أولاً من قسم مصنع الوكلاء.</div>` : `
+                    <div class="space-y-1.5 max-h-44 overflow-y-auto">
+                      ${myAgents.map(ag => {
+                        const checked = ui.selectedAgentIds.includes(ag.id);
+                        return `
+                          <div onclick="toggleMissionAgent(${ag.id})" class="p-2.5 rounded border cursor-pointer flex items-center justify-between ${checked ? 'border-[var(--primary)] bg-[var(--background)]' : 'border-[var(--border)]'}">
+                            <div>
+                              <div class="font-bold">${esc(ag.name)}</div>
+                              <div class="text-[var(--muted-foreground)]">${esc(ag.domain)}</div>
+                            </div>
+                            <span class="font-mono">${checked ? '✓ محدد' : ''}</span>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  `}
+                </div>
 
-      document.querySelectorAll('.hist-item').forEach((b) => {
-        b.onclick = () => {
-          inspectedMissionId = Number(b.getAttribute('data-hist'));
-          renderMissionControl();
-        };
-      });
+                <div>
+                  <label class="block mb-1.5 font-bold">3. الهدف التنفيذي للمهمة</label>
+                  <textarea id="mission_goal" rows="4" required placeholder="مثال: لدينا رأس مال 180,000 دولار ونستهدف إطلاق منتج SaaS باشتراك 49 دولار شهرياً وتكلفة استحواذ 110 دولار للعميل. احسب عبر أداة python_eval نقطة التعادل والعائد المتوقع بعد 18 شهراً بمعدل نمو 12% شهرياً ثم ضع خطة التنفيذ." class="w-full p-2.5 rounded bg-[var(--background)] border border-[var(--border)]"></textarea>
+                </div>
 
-      const cur = state.missions.find((m) => m.id === inspectedMissionId) || state.missions[0];
-      if (cur) {
-        document.getElementById('trace-title').textContent = `سجل تدفق وتكامل الوكلاء — مهمة #${cur.id}`;
-        document.getElementById('trace-subtitle').textContent = cur.title;
-        document.getElementById('trace-badges').innerHTML = `
-          <span class="px-2.5 py-1 rounded bg-[var(--secondary)] font-semibold text-[var(--success)]">صافي الربح: <strong class="font-mono">$${Number(cur.net_profit_usd).toFixed(2)}</strong></span>
-          <span class="px-2.5 py-1 rounded bg-[var(--secondary)]">التكلفة: <strong class="font-mono">$${Number(cur.total_cost_usd).toFixed(4)}</strong></span>
-          <span class="px-2.5 py-1 rounded bg-[var(--secondary)]">جودة QA: <strong class="font-mono">${cur.qa_score}/100</strong></span>
+                <button type="submit" ${ui.busy ? 'disabled' : ''} class="w-full py-2.5 rounded-md bg-[var(--primary)] text-[var(--primary-foreground)] font-bold disabled:opacity-50">
+                  ${ui.busy ? 'جارٍ التنفيذ الفعلي عبر النموذج...' : 'إطلاق المهمة وحساب التوكنز الفعلي'}
+                </button>
+              </form>
+
+              <div class="lg:col-span-7 p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-4 text-xs">
+                ${!activeMission ? `<div class="py-12 text-center text-[var(--muted-foreground)]">ستظهر هنا خطوات استدعاء الأدوات (ReAct Trace) والمخرج النهائي وتكلفة التوكنز فور تشغيل المهمة.</div>` : `
+                  <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border)]">
+                    <div>
+                      <div class="font-bold text-sm">${esc(activeMission.title)}</div>
+                      <div class="text-[var(--muted-foreground)] font-mono">${activeMission.mode} | ${activeMission.tokens} tokens | -${activeMission.credits_charged} cr</div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="font-bold">سجل استدعاء الأدوات والتفويض الفعلي (${activeMission.steps.length} خطوات):</div>
+                    <div class="space-y-1.5 max-h-44 overflow-y-auto">
+                      ${activeMission.steps.map((st, idx) => `
+                        <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)]">
+                          <div class="flex justify-between font-semibold">
+                            <span>#${idx + 1} ${esc(st.agent_name)} — ${st.kind === 'tool_call' ? 'أداة: ' + esc(st.tool_name) : st.kind === 'delegation' ? 'تفويض زميل' : 'إجابة نهائية'}</span>
+                            <span class="font-mono text-[var(--muted-foreground)]">${st.ms}ms</span>
+                          </div>
+                          ${st.tool_name ? `<div class="font-mono text-[var(--muted-foreground)] mt-1" dir="ltr">in: ${esc(st.input)} → out: ${esc(st.output)}</div>` : ''}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <div class="font-bold">المخرج النهائي المعتمد:</div>
+                    <pre class="p-3.5 rounded-lg bg-[var(--background)] border border-[var(--border)] whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto font-sans">${esc(activeMission.output)}</pre>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
         `;
-        document.getElementById('trace-steps').innerHTML = (cur.steps || []).map((s) => `
-          <div class="p-3.5 flex items-start gap-3 text-xs">
-            <div class="w-6 h-6 rounded-full bg-[var(--secondary)] font-mono font-bold flex items-center justify-center shrink-0">${s.order}</div>
-            <div class="space-y-1 min-w-0">
-              <div class="font-bold">${escapeHtml(s.agent)} <span class="font-normal text-[var(--muted-foreground)]">(${escapeHtml(s.domain)})</span> ${s.tool ? `<span class="font-mono text-[var(--link)]">[${escapeHtml(s.tool)}]</span>` : ''}</div>
-              <div class="text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(s.summary)}</div>
+      } else if (ui.tab === 'tools') {
+        mainHtml = `
+          <div class="space-y-6 text-xs">
+            <div class="pb-4 border-b border-[var(--border)]">
+              <h1 class="text-lg font-bold">الأدوات المخصصة، مفاتيح المطورين (API Keys)، ومفتاحك الخاص (BYOK)</h1>
+              <p class="text-xs text-[var(--muted-foreground)]">اربط مفتاحك الخاص للتشغيل المباشر، أو أنشئ أدوات HTTP خارجية ومفاتيح ربط برمجية لتطبيقاتك.</p>
             </div>
-          </div>
-        `).join('');
-        document.getElementById('trace-deliverable').textContent = cur.final_output || '';
-      }
-    }
 
-    function renderTools() {
-      document.getElementById('tools-grid').innerHTML = state.tools.map((t) => `
-        <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col justify-between gap-3">
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-xs">
-              <span class="px-2 py-0.5 rounded bg-[var(--secondary)] font-medium">${escapeHtml(t.category)}</span>
-              <span class="font-mono text-[var(--muted-foreground)]">${escapeHtml(t.slug)}</span>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <form onsubmit="saveByokSettings(event)" class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+                <div class="font-bold text-sm">مفتاح النماذج الخاص بك (BYOK — تشغيل مباشر بدون خصم نقاط)</div>
+                <div>
+                  <label class="block mb-1 font-semibold">المزود</label>
+                  <select id="byok_prov" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]">
+                    <option value="gemini" ${u.byok_provider === 'gemini' ? 'selected' : ''}>Google Gemini API (AIza...)</option>
+                    <option value="openrouter" ${u.byok_provider === 'openrouter' ? 'selected' : ''}>OpenRouter (sk-or-...)</option>
+                    <option value="openai" ${u.byok_provider === 'openai' ? 'selected' : ''}>OpenAI Direct (sk-...)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block mb-1 font-semibold">مفتاح API السري</label>
+                  <input id="byok_key" type="password" value="${esc(u.byok_key || '')}" placeholder="AIzaSy... أو sk-or-v1-..." dir="ltr" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+                </div>
+                <button type="submit" class="px-4 py-2 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">حفظ مفتاح مساحتي</button>
+              </form>
+
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+                <div class="font-bold text-sm">مفاتيح المطورين الخارجية (Developer API Keys)</div>
+                <form onsubmit="generateDevKey(event)" class="flex gap-2">
+                  <input id="devkey_label" placeholder="اسم التطبيق (مثال: متجري الإلكتروني)" class="flex-1 px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+                  <button type="submit" class="px-3 py-2 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">توليد مفتاح</button>
+                </form>
+                <div class="space-y-1.5">
+                  ${myKeys.length === 0 ? `<div class="text-[var(--muted-foreground)]">لا توجد مفاتيح نشطة بعد. (تتطلب باقة Business Swarm أو كود VIPSWARM).</div>` : myKeys.map(k => `
+                    <div class="p-2 rounded bg-[var(--background)] border border-[var(--border)] flex justify-between items-center">
+                      <span>${esc(k.label)}</span>
+                      <code class="font-mono" dir="ltr">${esc(k.masked)}</code>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
             </div>
-            <h3 class="font-bold text-sm pt-1">${escapeHtml(t.name)}</h3>
-            <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(t.description)}</p>
-            ${t.endpoint_url ? `<div class="font-mono text-xs text-[var(--link)] break-all">${escapeHtml(t.endpoint_url)}</div>` : ''}
+
+            <form onsubmit="addCustomTool(event)" class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+              <div class="font-bold text-sm">ربط أداة HTTP Webhook خارجية (يستدعيها الوكيل تلقائياً أثناء التفكير)</div>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <input id="ct_name" required placeholder="اسم الأداة (فحص المخزون)" class="px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+                <input id="ct_slug" required placeholder="inventory_api" dir="ltr" class="px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+                <select id="ct_method" class="px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]">
+                  <option value="POST">POST</option>
+                  <option value="GET">GET</option>
+                </select>
+                <input id="ct_url" type="url" required placeholder="https://api.example.com/hook" dir="ltr" class="px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+              </div>
+              <input id="ct_desc" required placeholder="وصف دقيق للنموذج متى يستدعي هذه الأداة..." class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]" />
+              <button type="submit" class="px-4 py-2 rounded border border-[var(--border)] bg-[var(--background)] font-bold">+ إضافة الأداة لمساحتي</button>
+            </form>
           </div>
-          <div class="pt-3 border-t border-[var(--card-border)] flex items-center justify-between">
-            <button data-testtool="${t.id}" class="btn-test-tool px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] border border-[var(--border)]">▶ اختبار الأداة</button>
-            ${!t.is_builtin ? `<button data-deltool="${t.id}" class="btn-del-tool text-xs text-[var(--error)] px-2 py-1">حذف</button>` : `<span class="text-xs text-[var(--muted-foreground)]">مدمجة بالنواة</span>`}
+        `;
+      } else if (ui.tab === 'billing') {
+        mainHtml = `
+          <div class="space-y-6 text-xs">
+            <div class="pb-4 border-b border-[var(--border)]">
+              <h1 class="text-lg font-bold">الاشتراك الشهري، الفواتير، وقسائم الترقية الفورية</h1>
+              <p class="text-xs text-[var(--muted-foreground)]">باقتك الحالية: <strong>${esc(pl.name_ar)}</strong> | الرصيد: <strong>${u.credits.toLocaleString()} cr</strong></p>
+            </div>
+
+            <form onsubmit="redeemVoucher(event)" class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] flex flex-wrap items-center gap-3">
+              <div class="font-bold">تفعيل كود قسيمة فورية (جرب PRO2026 أو VIPSWARM):</div>
+              <input id="voucher_input" required placeholder="VIPSWARM" dir="ltr" class="px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono uppercase" />
+              <button type="submit" class="px-4 py-2 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">تفعيل القسيمة الآن</button>
+            </form>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              ${state.plans.map(p => `
+                <div class="p-4 rounded-xl bg-[var(--card)] border ${p.id === pl.id ? 'border-[var(--primary)]' : 'border-[var(--border)]'} flex flex-col justify-between gap-3">
+                  <div class="space-y-1.5">
+                    <div class="font-bold text-sm">${esc(p.name_ar)}</div>
+                    <div class="text-lg font-bold font-mono" dir="ltr">$${p.price}/mo</div>
+                    <div class="text-[var(--muted-foreground)]">+${p.credits.toLocaleString()} نقطة | حتى ${p.max_agents < 0 ? '∞' : p.max_agents} وكيل</div>
+                  </div>
+                  ${p.id === pl.id ? `<span class="py-1.5 text-center rounded bg-[var(--background)] font-bold text-[var(--success)]">الباقة النشطة حالياً</span>` : `
+                    <button onclick="submitInvoiceRequest(${p.id})" class="py-2 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">طلب ترقية وإصدار فاتورة</button>
+                  `}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2">
+                <div class="font-bold text-sm">سجل فواتيرك (${myInvoices.length})</div>
+                ${myInvoices.length === 0 ? `<div class="text-[var(--muted-foreground)]">لا توجد فواتير صادرة بعد.</div>` : myInvoices.map(inv => `
+                  <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] flex justify-between items-center">
+                    <div>
+                      <div class="font-bold font-mono">${esc(inv.inv_no)} — $${inv.amount_usd}</div>
+                      <div class="text-[var(--muted-foreground)]">${esc(inv.plan_name)} | مرجع: ${esc(inv.reference)}</div>
+                    </div>
+                    <span class="font-bold ${inv.status === 'paid' ? 'text-[var(--success)]' : 'text-[var(--warning)]'}">${inv.status === 'paid' ? 'مدفوعة ومعتمدة' : 'بانتظار اعتماد المالك'}</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2">
+                <div class="font-bold text-sm">دفتر حركات المحفظة (${myTxs.length})</div>
+                ${myTxs.slice(0, 6).map(tx => `
+                  <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] flex justify-between items-center">
+                    <span>${esc(tx.note)}</span>
+                    <span class="font-mono font-bold ${tx.delta >= 0 ? 'text-[var(--success)]' : 'text-[var(--warning)]'}" dir="ltr">${tx.delta >= 0 ? '+' : ''}${tx.delta} cr</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
           </div>
+        `;
+      } else if (ui.tab === 'admin' && u.role === 'super_admin') {
+        const totalProfit = state.txs.reduce((s, t) => s + Number(t.profit_usd || 0), 0);
+        const totalApiCost = state.txs.reduce((s, t) => s + Number(t.api_cost_usd || 0), 0);
+        const pendingInvs = state.invoices.filter(i => i.status === 'pending');
+
+        mainHtml = `
+          <div class="space-y-6 text-xs">
+            <div class="pb-4 border-b border-[var(--border)] flex flex-wrap justify-between items-center gap-3">
+              <div>
+                <h1 class="text-lg font-bold">لوحة تحكم المالك المركزية (Super Admin SaaS Console)</h1>
+                <p class="text-[var(--muted-foreground)]">إدارة محرك الذكاء الاصطناعي المركزي، هامش الربح، اعتماد فواتير المشتركين، وإصدار القسائم.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-[var(--muted-foreground)]">إجمالي المشتركين</div>
+                <div class="text-xl font-bold font-mono mt-1">${state.users.length}</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-[var(--muted-foreground)]">صافي ربح المنصة</div>
+                <div class="text-xl font-bold font-mono text-[var(--success)] mt-1" dir="ltr">$${totalProfit.toFixed(4)}</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-[var(--muted-foreground)]">تكلفة المزود الفعلية</div>
+                <div class="text-xl font-bold font-mono mt-1" dir="ltr">$${totalApiCost.toFixed(4)}</div>
+              </div>
+              <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                <div class="text-[var(--muted-foreground)]">فواتير بانتظار الاعتماد</div>
+                <div class="text-xl font-bold font-mono text-[var(--warning)] mt-1">${pendingInvs.length}</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <form onsubmit="saveAdminEngine(event)" class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-3">
+                <div class="font-bold text-sm">إعداد محرك النماذج المركزي للمنصة ومعامل الربح</div>
+                <div>
+                  <label class="block mb-1 font-semibold">مزود النماذج المركزي</label>
+                  <select id="adm_prov" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)]">
+                    <option value="gemini" ${state.config.provider === 'gemini' ? 'selected' : ''}>Google Gemini API (AIza...)</option>
+                    <option value="openrouter" ${state.config.provider === 'openrouter' ? 'selected' : ''}>OpenRouter (sk-or-...)</option>
+                    <option value="openai" ${state.config.provider === 'openai' ? 'selected' : ''}>OpenAI Direct (sk-...)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block mb-1 font-semibold">مفتاح API المركزي (يخدم جميع المشتركين ويحقق هامش الربح)</label>
+                  <input id="adm_key" type="password" value="${esc(state.config.api_key || '')}" placeholder="الصق مفتاح Gemini أو OpenRouter أو OpenAI الحقيقي هنا..." dir="ltr" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+                </div>
+                <div class="grid grid-cols-2 gap-3 items-center">
+                  <div>
+                    <label class="block mb-1 font-semibold">معامل تسعير النقاط (Markup X)</label>
+                    <input id="adm_markup" type="number" step="0.5" min="1" value="${state.config.markup_multiplier}" class="w-full px-3 py-2 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+                  </div>
+                  <label class="flex items-center gap-2 pt-5 cursor-pointer">
+                    <input id="adm_byok" type="checkbox" ${state.config.allow_byok ? 'checked' : ''} />
+                    <span>السماح بمفاتيح العملاء BYOK</span>
+                  </label>
+                </div>
+                <div class="flex gap-2 pt-1">
+                  <button type="submit" class="px-4 py-2 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">حفظ الإعدادات</button>
+                  <button type="button" onclick="pingAdminLlm()" class="px-3 py-2 rounded border border-[var(--border)] bg-[var(--background)] font-semibold">اختبار الاتصال الفعلي (Ping)</button>
+                </div>
+              </form>
+
+              <div class="space-y-4">
+                <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2.5">
+                  <div class="font-bold text-sm">طلبات الفواتير والتحويلات المالية (${state.invoices.length})</div>
+                  ${state.invoices.length === 0 ? `<div class="text-[var(--muted-foreground)]">لا توجد فواتير مرفوعة من المشتركين حالياً.</div>` : state.invoices.map(inv => `
+                    <div class="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] flex justify-between items-center gap-2">
+                      <div>
+                        <div class="font-bold">${esc(inv.user_email)} — $${inv.amount_usd} (${esc(inv.plan_name)})</div>
+                        <div class="text-[var(--muted-foreground)] font-mono">${esc(inv.inv_no)} | مرجع: ${esc(inv.reference)}</div>
+                      </div>
+                      ${inv.status === 'pending' ? `
+                        <button onclick="adminApproveInvoice(${inv.id})" class="px-3 py-1.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-bold">اعتماد وترقية</button>
+                      ` : `<span class="text-[var(--success)] font-bold">معتمدة</span>`}
+                    </div>
+                  `).join('')}
+                </div>
+
+                <form onsubmit="createAdminVoucher(event)" class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2.5">
+                  <div class="font-bold text-sm">إصدار كود قسيمة اشتراك جديدة</div>
+                  <div class="grid grid-cols-3 gap-2">
+                    <input id="v_code" required placeholder="LAUNCH26" dir="ltr" class="px-2.5 py-1.5 rounded bg-[var(--background)] border border-[var(--border)] font-mono uppercase" />
+                    <select id="v_plan" class="px-2 py-1.5 rounded bg-[var(--background)] border border-[var(--border)]">
+                      <option value="2">باقة المحترفين</option>
+                      <option value="3">باقة الشركات</option>
+                      <option value="4">باقة المؤسسات</option>
+                    </select>
+                    <input id="v_credits" type="number" value="2500" class="px-2.5 py-1.5 rounded bg-[var(--background)] border border-[var(--border)] font-mono" />
+                  </div>
+                  <button type="submit" class="px-3 py-1.5 rounded border border-[var(--border)] bg-[var(--background)] font-bold">+ إنشاء القسيمة</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2">
+              <div class="font-bold text-sm">قائمة حسابات المشتركين المسجلين (${state.users.length})</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+                      <th class="py-2">الاسم / البريد</th>
+                      <th class="py-2">الصلاحية</th>
+                      <th class="py-2">الباقة</th>
+                      <th class="py-2">الرصيد المتاح</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${state.users.map(usr => {
+                      const up = userPlan(usr);
+                      return `
+                        <tr class="border-b border-[var(--border)]">
+                          <td class="py-2 font-semibold">${esc(usr.full_name)} <span class="font-mono text-[var(--muted-foreground)]">(${esc(usr.email)})</span></td>
+                          <td class="py-2 font-mono">${esc(usr.role)}</td>
+                          <td class="py-2">${esc(up.name_ar)}</td>
+                          <td class="py-2 font-mono">${usr.credits.toLocaleString()} cr</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-12">
+          <aside class="md:col-span-3 lg:col-span-3 p-4 bg-[var(--card)] border-b md:border-b-0 md:border-l border-[var(--border)] flex flex-col justify-between gap-6">
+            <div class="space-y-4">
+              <div class="pb-3 border-b border-[var(--border)]">
+                <div class="font-bold text-sm">${esc(state.config.platform_name)}</div>
+                <div class="text-xs text-[var(--muted-foreground)]">Multi-Tenant SaaS OS</div>
+              </div>
+
+              <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] space-y-1 text-xs">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold">${esc(u.full_name)}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-[var(--card)] font-mono">${u.role === 'super_admin' ? 'Admin' : 'Tenant'}</span>
+                </div>
+                <div class="font-mono text-[var(--muted-foreground)] truncate" dir="ltr">${esc(u.email)}</div>
+                <div class="pt-1.5 mt-1.5 border-t border-[var(--border)] flex justify-between">
+                  <span class="text-[var(--muted-foreground)]">الرصيد:</span>
+                  <span class="font-mono font-bold text-[var(--success)]">${u.credits.toLocaleString()} cr</span>
+                </div>
+              </div>
+
+              <nav class="space-y-1 text-xs font-semibold">
+                <button onclick="ui.tab='dashboard';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md ${ui.tab === 'dashboard' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}">مساحة العمل</button>
+                <button onclick="ui.tab='agents';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md flex justify-between ${ui.tab === 'agents' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}"><span>مصنع ومتجر الوكلاء</span><span class="font-mono">${myAgents.length}</span></button>
+                <button onclick="ui.tab='missions';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md flex justify-between ${ui.tab === 'missions' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}"><span>غرفة العمليات (ReAct)</span><span class="font-mono">${myMissions.length}</span></button>
+                <button onclick="ui.tab='tools';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md ${ui.tab === 'tools' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}">الأدوات ومفاتيح API</button>
+                <button onclick="ui.tab='billing';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md ${ui.tab === 'billing' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}">الاشتراك والفواتير</button>
+                ${u.role === 'super_admin' ? `
+                  <button onclick="ui.tab='admin';ui.notice='';ui.error='';render()" class="w-full text-right px-3 py-2 rounded-md border border-[var(--border)] mt-2 ${ui.tab === 'admin' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--background)]'}">لوحة المالك (Super Admin)</button>
+                ` : ''}
+              </nav>
+            </div>
+
+            <button onclick="doLogout()" class="w-full py-2 rounded-md border border-[var(--border)] text-xs font-bold text-[var(--error)] hover:bg-[var(--background)]">
+              تسجيل الخروج وتبديل الحساب
+            </button>
+          </aside>
+
+          <main class="md:col-span-9 lg:col-span-9 p-5 space-y-4">
+            ${ui.error ? `<div class="p-3 rounded-lg border border-[var(--error)] text-[var(--error)] text-xs font-medium">${esc(ui.error)}</div>` : ''}
+            ${ui.notice ? `<div class="p-3 rounded-lg border border-[var(--success)] text-[var(--success)] text-xs font-medium">${esc(ui.notice)}</div>` : ''}
+            ${mainHtml}
+          </main>
         </div>
-      `).join('');
-
-      document.querySelectorAll('.btn-test-tool').forEach((b) => {
-        b.onclick = () => {
-          const tool = state.tools.find((x) => x.id === Number(b.getAttribute('data-testtool')));
-          if (!tool) return;
-          const banner = document.getElementById('tool-test-banner');
-          banner.classList.remove('hidden');
-          banner.innerHTML = `<div class="font-bold text-[var(--success)]">✓ اختبار ناجح للأداة [${escapeHtml(tool.name)}]</div><div class="text-[var(--muted-foreground)]">تم التحقق من جاهزية الأداة للتركيب والتشغيل التلقائي داخل مهام الوكلاء.</div>`;
-        };
-      });
-
-      document.querySelectorAll('.btn-del-tool').forEach((b) => {
-        b.onclick = () => {
-          const id = Number(b.getAttribute('data-deltool'));
-          state.tools = state.tools.filter((x) => x.id !== id);
-          saveState();
-          renderAll();
-        };
-      });
+      `;
     }
 
-    function renderSaas() {
-      document.getElementById('set-brand').value = state.settings.brand || 'Nexus AgentOS';
-      document.getElementById('set-markup').value = state.settings.markupX || 4.0;
-      document.getElementById('set-provider').value = state.settings.provider || 'simulation';
-      document.getElementById('set-apikey').value = state.settings.apiKey || '';
-      document.getElementById('set-cfo').checked = Boolean(state.settings.cfoAutoPause);
-      document.getElementById('set-qa').checked = Boolean(state.settings.qaGate);
-      document.getElementById('api-key-box').classList.toggle('hidden', state.settings.provider === 'simulation');
-
-      document.getElementById('clients-tbody').innerHTML = state.clients.map((c) => `
-        <tr>
-          <td class="py-2.5 px-3 font-semibold">${escapeHtml(c.name)}</td>
-          <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${escapeHtml(c.plan)}</td>
-          <td class="py-2.5 px-3 font-mono font-bold text-[var(--success)]">$${Number(c.fee).toFixed(0)}/mo</td>
-          <td class="py-2.5 px-2"><button data-delcl="${c.id}" class="btn-del-cl text-[var(--error)]">✕</button></td>
-        </tr>
-      `).join('');
-
-      document.querySelectorAll('.btn-del-cl').forEach((b) => {
-        b.onclick = () => {
-          const id = Number(b.getAttribute('data-delcl'));
-          state.clients = state.clients.filter((x) => x.id !== id);
-          saveState();
-          renderAll();
-        };
-      });
+    function render() {
+      const root = document.getElementById('app');
+      const u = currentUser();
+      root.innerHTML = u ? renderWorkspace(u) : renderAuthGate();
     }
 
-    // ==================== AGENT MODAL & AI META SPAWNER ====================
-    function openAgentModal(editId = null) {
-      editingAgentId = editId;
-      const doms = Array.from(new Set(state.agents.map((a) => a.domain)));
-      document.getElementById('domains-datalist').innerHTML = doms.map((d) => `<option value="${escapeHtml(d)}"></option>`).join('');
-      document.getElementById('ag-modal-err').classList.add('hidden');
-
-      const existing = editId ? state.agents.find((a) => a.id === editId) : null;
-      document.getElementById('agent-modal-title').textContent = existing ? `تعديل الوكيل: ${existing.name}` : 'بناء وتثبيت وكيل جديد (في أي مجال يخطر ببالك)';
-      document.getElementById('spawner-box').classList.toggle('hidden', Boolean(existing));
-
-      document.getElementById('ag-idea').value = '';
-      document.getElementById('ag-name').value = existing ? existing.name : '';
-      document.getElementById('ag-domain').value = existing ? existing.domain : '';
-      document.getElementById('ag-role').value = existing ? existing.role_title : '';
-      document.getElementById('ag-model').value = existing ? existing.model : 'google/gemini-2.5-flash';
-      document.getElementById('ag-desc').value = existing ? existing.description : '';
-      document.getElementById('ag-prompt').value = existing ? existing.system_prompt : '';
-      document.getElementById('ag-trigger').value = existing ? existing.trigger_type : 'manual';
-      document.getElementById('ag-price').value = existing ? existing.price_per_run : 35;
-      document.getElementById('ag-maxcost').value = existing ? existing.max_cost_usd : 0.50;
-      document.getElementById('ag-delegate').checked = existing ? Boolean(existing.can_delegate) : true;
-
-      const selectedSlugs = existing ? existing.installed_tools : ['web_search', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'];
-      renderAgentModalTools(selectedSlugs);
-      document.getElementById('agent-modal').classList.remove('hidden');
-    }
-
-    function renderAgentModalTools(selectedSlugs) {
-      document.getElementById('ag-tools-checks').innerHTML = state.tools.map((t) => `
-        <label class="flex items-start gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--background)] cursor-pointer text-xs">
-          <input type="checkbox" name="ag-tool-chk" value="${escapeHtml(t.slug)}" ${selectedSlugs.includes(t.slug) ? 'checked' : ''} class="mt-0.5 accent-[var(--primary)]" />
-          <div>
-            <div class="font-semibold">${escapeHtml(t.name)}</div>
-            <div class="text-[var(--muted-foreground)]">${escapeHtml(t.category)}</div>
-          </div>
-        </label>
-      `).join('');
-    }
-
-    document.getElementById('ag-spawn-btn').onclick = () => {
-      const idea = document.getElementById('ag-idea').value.trim();
-      if (!idea) return;
-      const low = idea.toLowerCase();
-      let dom = document.getElementById('ag-domain').value.trim();
-      if (!dom) {
-        const rules = [
-          [['قانون', 'عقد', 'عقود', 'محام'], 'الشؤون القانونية والعقود'],
-          [['عقار', 'شقق', 'أراضي', 'إيجار'], 'العقارات والاستثمار العقاري'],
-          [['سيار', 'مزاد', 'شحن', 'جمارك'], 'السيارات والمزادات واللوجستيات'],
-          [['تداول', 'أسهم', 'كريبتو', 'ذهب', 'مالي'], 'الأسواق المالية والتداول الكمي'],
-          [['متجر', 'منتج', 'شوبيفاي', 'أمازون'], 'التجارة الإلكترونية والمنتجات'],
-          [['كود', 'برمج', 'تطبيق', 'موقع'], 'هندسة البرمجيات والـ Micro-SaaS'],
-          [['طب', 'عياد', 'صحة', 'دواء'], 'الرعاية الصحية والعيادات'],
-          [['سفر', 'طيران', 'فندق', 'سياح'], 'السياحة وحجوزات السفر']
-        ];
-        for (const [keys, label] of rules) {
-          if (keys.some((k) => low.includes(k))) { dom = label; break; }
-        }
-        if (!dom) dom = 'قطاع ' + idea.split(/\s+/).slice(0, 3).join(' ');
-      }
-
-      const words = idea.split(/\s+/).slice(0, 4).join(' ');
-      document.getElementById('ag-name').value = 'وكيل ' + words;
-      document.getElementById('ag-domain').value = dom;
-      document.getElementById('ag-role').value = 'خبير ذاتي — ' + dom;
-      document.getElementById('ag-desc').value = 'وكيل متخصص يعمل آلياً لتنفيذ: ' + idea;
-      document.getElementById('ag-prompt').value =
-        `أنت وكيل ذكاء اصطناعي مستقل عالي الكفاءة متخصص في (${dom}).\n` +
-        `المهمة الأساسية: ${idea}\n` +
-        `1. نفذ المهمة ذاتياً بنسبة 100% باستخدام الأدوات المثبتة.\n` +
-        `2. ركز على تعظيم الربح المادي وتقليل التكلفة والمخاطر بالأرقام.\n` +
-        `3. تكامل مع الوكلاء الزملاء عند الحاجة وسلم مخرجاً جاهزاً للتنفيذ الفوري.`;
-
-      const rec = ['web_search', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'];
-      if (['موقع', 'مزاد', 'أسعار', 'فحص', 'منافس'].some((w) => low.includes(w))) rec.push('web_scraper');
-      if (['حساب', 'جمارك', 'مالي', 'كود', 'أرقام', 'تحليل'].some((w) => low.includes(w))) rec.push('python_sandbox');
-      if (['نشر', 'إرسال', 'واتساب', 'متجر', 'api'].some((w) => low.includes(w))) rec.push('http_webhook');
-      renderAgentModalTools(rec);
-    };
-
-    document.getElementById('save-agent-btn').onclick = () => {
-      const name = document.getElementById('ag-name').value.trim();
-      const domain = document.getElementById('ag-domain').value.trim();
-      const prompt = document.getElementById('ag-prompt').value.trim();
-      if (!name || !domain || !prompt) {
-        const err = document.getElementById('ag-modal-err');
-        err.textContent = 'يرجى إدخال اسم الوكيل، المجال، وبرومبت المهمة.';
-        err.classList.remove('hidden');
-        return;
-      }
-      const toolsPicked = Array.from(document.querySelectorAll('input[name="ag-tool-chk"]:checked')).map((el) => el.value);
-      const payload = {
-        name,
-        domain,
-        role_title: document.getElementById('ag-role').value.trim() || ('خبير ' + domain),
-        model: document.getElementById('ag-model').value,
-        description: document.getElementById('ag-desc').value.trim() || name,
-        system_prompt: prompt,
-        installed_tools: toolsPicked,
-        trigger_type: document.getElementById('ag-trigger').value,
-        price_per_run: Number(document.getElementById('ag-price').value) || 35,
-        max_cost_usd: Number(document.getElementById('ag-maxcost').value) || 0.5,
-        can_delegate: document.getElementById('ag-delegate').checked
-      };
-
-      if (editingAgentId) {
-        const idx = state.agents.findIndex((a) => a.id === editingAgentId);
-        if (idx >= 0) state.agents[idx] = { ...state.agents[idx], ...payload };
-      } else {
-        const nextId = Math.max(0, ...state.agents.map((a) => a.id)) + 1;
-        state.agents.unshift({
-          id: nextId,
-          ...payload,
-          is_system_agent: false,
-          status: 'idle',
-          total_runs: 0,
-          total_cost_usd: 0,
-          total_revenue_usd: 0
-        });
-      }
-      saveState();
-      document.getElementById('agent-modal').classList.add('hidden');
-      renderAll();
-    };
-
-    // ==================== LIVE MISSION ORCHESTRATOR ====================
-    async function callLiveLLMIfConfigured(agent, goal, contextText) {
-      const prov = state.settings.provider;
-      const key = (state.settings.apiKey || '').trim();
-      if (prov === 'simulation' || !key) return null;
-
-      let url = 'https://openrouter.ai/api/v1/chat/completions';
-      let model = agent.model;
-      if (prov === 'openai') {
-        url = 'https://api.openai.com/v1/chat/completions';
-        model = 'gpt-4o-mini';
-      } else if (prov === 'gemini') {
-        url = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-        model = 'gemini-2.5-flash';
-      }
-
-      try {
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: `اسمك: ${agent.name} (${agent.role_title}) في مجال (${agent.domain}). تعليماتك:\n${agent.system_prompt}` },
-              { role: 'user', content: `المهمة:\n${goal}\n\nمخرجات الزملاء السابقين:\n${contextText}` }
-            ],
-            max_tokens: 900
-          })
-        });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        return data.choices?.[0]?.message?.content || null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    document.getElementById('mc-execute-btn').onclick = async () => {
-      const goal = document.getElementById('mc-goal-input').value.trim();
-      const errEl = document.getElementById('mc-error');
-      errEl.classList.add('hidden');
-      if (!goal) {
-        errEl.textContent = 'اكتب الهدف أو المهمة المطلوب تنفيذها أولاً.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      const workers = state.agents.filter((a) => !a.is_system_agent);
-      let squad = [];
-      if (mcMode === 'standalone') {
-        const picked = workers.find((a) => a.id === mcSelectedIds[0]) || workers[0];
-        if (picked) squad = [picked];
-      } else if (mcStrategy === 'manual') {
-        squad = mcSelectedIds.map((id) => workers.find((a) => a.id === id)).filter(Boolean);
-      } else {
-        const words = goal.toLowerCase().split(/\s+/).filter((w) => w.length >= 3);
-        squad = workers
-          .map((a) => {
-            const hay = `${a.name} ${a.domain} ${a.role_title} ${a.description} ${a.system_prompt}`.toLowerCase();
-            let score = 0;
-            words.forEach((w) => { if (hay.includes(w)) score += 3; });
-            return { score, a };
-          })
-          .sort((x, y) => y.score - x.score)
-          .slice(0, 3)
-          .map((x) => x.a);
-      }
-
-      if (!squad.length) {
-        errEl.textContent = 'يرجى اختيار وكيل واحد على الأقل.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      const btn = document.getElementById('mc-execute-btn');
-      btn.disabled = true;
-      btn.textContent = '⏳ جاري تشغيل الوكلاء وتكامل المهام...';
-
-      const steps = [];
-      let order = 1;
-      let totalCost = 0;
-      const outputs = [];
-      const toolsMap = {};
-      state.tools.forEach((t) => { toolsMap[t.slug] = t.name; });
-
-      if (mcMode === 'swarm' || squad.length > 1) {
-        steps.push({
-          order: order++,
-          agent: 'المنسق العام للأسطول (Master Orchestrator)',
-          domain: 'نواة النظام',
-          tool: 'agent_router',
-          summary: 'تم تفكيك الهدف وتشكيل خلية عمل متكاملة من: ' + squad.map((s) => `[${s.name} — ${s.domain}]`).join(' ⟵ ')
-        });
-        totalCost += 0.0004;
-      }
-
-      for (let i = 0; i < squad.length; i++) {
-        const ag = squad[i];
-        const agTools = (ag.installed_tools || []).filter((t) => t !== 'delegate_to_agent').slice(0, 2);
-        agTools.forEach((sl) => {
-          steps.push({
-            order: order++,
-            agent: ag.name,
-            domain: ag.domain,
-            tool: sl,
-            summary: `تشغيل أداة (${toolsMap[sl] || sl}) لجمع ومعالجة البيانات التخصصية في قطاع (${ag.domain}).`
-          });
-          totalCost += 0.0002;
-        });
-
-        // Standalone automatic peer delegation when needed
-        if (mcMode === 'standalone' && ag.can_delegate && workers.length > 1 && ['تكامل', 'شامل', 'كامل', 'حملة', 'مع '].some((k) => goal.includes(k))) {
-          const peer = workers.find((p) => p.id !== ag.id);
-          if (peer) {
-            steps.push({
-              order: order++,
-              agent: peer.name,
-              domain: peer.domain,
-              tool: 'delegate_to_agent',
-              summary: `تكامل ذاتي: استعان [${ag.name}] بزميله [${peer.name}] لإنجاز شق تكميلي في (${peer.domain})!`
-            });
-            outputs.push(`## مساهمة تكاملية من [${peer.name} — ${peer.domain}]\n- دعم المهمة عبر خبرة (${peer.role_title}) لضمان جاهزية التنفيذ 100%.`);
-            totalCost += 0.0007;
-          }
-        }
-
-        const liveText = await callLiveLLMIfConfigured(ag, goal, outputs.join('\n\n'));
-        const agCost = 0.0009;
-        totalCost += agCost;
-
-        const outBlock = liveText
-          ? `## [${ag.name} — ${ag.domain}]\n${liveText}`
-          : `## [${ag.name} — ${ag.domain}]\n` +
-            `- **التخصص المنفذ**: ${ag.role_title}\n` +
-            `- **تطبيق تعليمات البرومبت**: ${(ag.system_prompt || '').split('\n')[0].slice(0, 140)}\n` +
-            `- **المخرج التنفيذي لهدف (${goal.slice(0, 90)})**: تم إعداد حزمة العمل المهيكلة في قطاع (${ag.domain}) مربوطة بالأدوات المثبتة وجاهزة للتسليم أو التمرير للمرحلة التالية (القيمة السوقية المقدرة: $${ag.price_per_run}).`;
-
-        outputs.push(outBlock);
-        steps.push({
-          order: order++,
-          agent: ag.name,
-          domain: ag.domain,
-          tool: liveText ? 'live_llm' : 'autonomous_core',
-          summary: `أنجز [${ag.name}] مهامه وسلّم المخرجات إلى مساحة العمل المشتركة.`
-        });
-
-        // Update agent stats
-        const targetAg = state.agents.find((x) => x.id === ag.id);
-        if (targetAg) {
-          targetAg.total_runs += 1;
-          targetAg.total_cost_usd = Number((targetAg.total_cost_usd + agCost).toFixed(5));
-          targetAg.total_revenue_usd = Number((targetAg.total_revenue_usd + Number(ag.price_per_run || 25)).toFixed(2));
-        }
-      }
-
-      const qaScore = state.settings.qaGate ? Math.min(99, 93 + squad.length) : 95;
-      if (state.settings.qaGate) {
-        steps.push({
-          order: order++,
-          agent: 'وكيل فحص الجودة (QA Critic)',
-          domain: 'ضمان الجودة',
-          tool: 'qa_gate',
-          summary: `تمت مراجعة المخرجات واعتمادها بدرجة جودة ${qaScore}/100 بدون تعارض.`
-        });
-      }
-
-      const customVal = document.getElementById('mc-value-input').value.trim();
-      const defaultVal = squad.reduce((s, a) => s + Number(a.price_per_run || 25), 0);
-      const finalVal = customVal ? Number(customVal) : defaultVal;
-      const netProfit = Number((finalVal - totalCost).toFixed(4));
-
-      steps.push({
-        order: order++,
-        agent: 'وكيل المدير المالي (CFO Guardrail)',
-        domain: 'الرقابة المالية والأرباح',
-        tool: 'cfo_audit',
-        summary: `التكلفة الفعلية $${totalCost.toFixed(4)} | القيمة المولدة $${finalVal.toFixed(2)} | صافي الربح +$${netProfit.toFixed(2)}.`
-      });
-
-      const nextMissionId = Math.max(0, ...state.missions.map((m) => m.id)) + 1;
-      const newMission = {
-        id: nextMissionId,
-        title: goal.slice(0, 65) + (goal.length > 65 ? '...' : ''),
-        mode: mcMode,
-        qa_score: qaScore,
-        total_cost_usd: Number(totalCost.toFixed(5)),
-        estimated_value_usd: finalVal,
-        net_profit_usd: netProfit,
-        steps,
-        final_output: `# التقرير والمخرج المتكامل المعتمد\n**الهدف المنفذ:** ${goal}\n\n` + outputs.join('\n\n---\n\n') + `\n\n---\n**ملخص الربحية:** التكلفة $${totalCost.toFixed(4)} | العائد $${finalVal.toFixed(2)} | صافي الربح **$${netProfit.toFixed(2)}**`
-      };
-
-      state.missions.unshift(newMission);
-      inspectedMissionId = newMission.id;
-      saveState();
-
-      btn.disabled = false;
-      btn.textContent = '▶ إطلاق التنفيذ الحي الآن';
-      renderAll();
-    };
-
-    // ==================== EVENT WIRING ====================
-    document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
-      btn.onclick = () => switchTab(btn.getAttribute('data-tab'));
-    });
-
-    document.getElementById('cmd-add-agent-btn').onclick = () => {
-      switchTab('studio');
-      openAgentModal(null);
-    };
-    document.getElementById('cmd-run-swarm-btn').onclick = () => {
-      mcMode = 'swarm';
-      switchTab('missions');
-    };
-    document.getElementById('studio-new-agent-btn').onclick = () => openAgentModal(null);
-    document.getElementById('close-agent-modal').onclick = () => document.getElementById('agent-modal').classList.add('hidden');
-    document.getElementById('cancel-agent-modal').onclick = () => document.getElementById('agent-modal').classList.add('hidden');
-
-    document.getElementById('studio-search').oninput = (e) => {
-      studioSearch = e.target.value;
-      renderStudio();
-    };
-
-    document.getElementById('mc-mode-swarm').onclick = () => { mcMode = 'swarm'; renderMissionControl(); };
-    document.getElementById('mc-mode-solo').onclick = () => {
-      mcMode = 'standalone';
-      const firstWorker = state.agents.find((a) => !a.is_system_agent);
-      if (mcSelectedIds.length !== 1 && firstWorker) mcSelectedIds = [firstWorker.id];
-      renderMissionControl();
-    };
-    document.getElementById('mc-strat-auto').onclick = () => { mcStrategy = 'auto'; renderMissionControl(); };
-    document.getElementById('mc-strat-manual').onclick = () => { mcStrategy = 'manual'; renderMissionControl(); };
-
-    document.querySelectorAll('.preset-btn').forEach((b) => {
-      b.onclick = () => {
-        document.getElementById('mc-goal-input').value = b.getAttribute('data-preset');
-      };
-    });
-
-    document.getElementById('copy-deliverable-btn').onclick = (e) => {
-      const txt = document.getElementById('trace-deliverable').textContent;
-      navigator.clipboard?.writeText(txt);
-      e.target.textContent = '✓ تم النسخ!';
-      setTimeout(() => { e.target.textContent = 'نسخ المخرج'; }, 1800);
-    };
-
-    document.getElementById('open-tool-modal-btn').onclick = () => document.getElementById('tool-modal').classList.remove('hidden');
-    document.getElementById('close-tool-modal').onclick = () => document.getElementById('tool-modal').classList.add('hidden');
-    document.getElementById('cancel-tool-modal').onclick = () => document.getElementById('tool-modal').classList.add('hidden');
-
-    document.getElementById('save-tool-btn').onclick = () => {
-      const name = document.getElementById('tl-name').value.trim();
-      const desc = document.getElementById('tl-desc').value.trim();
-      if (!name || !desc) return;
-      const nextId = Math.max(0, ...state.tools.map((t) => t.id)) + 1;
-      const slug = 'custom_' + nextId;
-      state.tools.push({
-        id: nextId,
-        slug,
-        name,
-        category: document.getElementById('tl-cat').value.trim() || 'أدوات مخصصة',
-        description: desc,
-        endpoint_url: document.getElementById('tl-url').value.trim(),
-        is_builtin: false
-      });
-      saveState();
-      document.getElementById('tl-name').value = '';
-      document.getElementById('tl-desc').value = '';
-      document.getElementById('tl-url').value = '';
-      document.getElementById('tool-modal').classList.add('hidden');
-      renderAll();
-    };
-
-    document.getElementById('set-provider').onchange = (e) => {
-      document.getElementById('api-key-box').classList.toggle('hidden', e.target.value === 'simulation');
-    };
-
-    document.getElementById('save-settings-btn').onclick = () => {
-      state.settings.brand = document.getElementById('set-brand').value.trim() || 'Nexus AgentOS';
-      state.settings.markupX = Number(document.getElementById('set-markup').value) || 4.0;
-      state.settings.provider = document.getElementById('set-provider').value;
-      state.settings.apiKey = document.getElementById('set-apikey').value.trim();
-      state.settings.cfoAutoPause = document.getElementById('set-cfo').checked;
-      state.settings.qaGate = document.getElementById('set-qa').checked;
-      saveState();
-      renderAll();
-      const msg = document.getElementById('settings-saved-msg');
-      msg.classList.remove('hidden');
-      setTimeout(() => msg.classList.add('hidden'), 2000);
-    };
-
-    document.getElementById('export-fleet-btn').onclick = () => {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'nexus-agent-os-backup.json';
-      a.click();
-    };
-
-    document.getElementById('add-client-btn').onclick = () => {
-      const name = document.getElementById('cl-name').value.trim();
-      if (!name) return;
-      const nextId = Math.max(0, ...state.clients.map((c) => c.id)) + 1;
-      state.clients.unshift({
-        id: nextId,
-        name,
-        plan: document.getElementById('cl-plan').value.trim() || 'باقة الشركات الذكية',
-        fee: Number(document.getElementById('cl-fee').value) || 199
-      });
-      document.getElementById('cl-name').value = '';
-      saveState();
-      renderAll();
-    };
-
-    // Init
-    switchTab('command');
+    initStore().then(render);
   </script>
 </body>
 </html>

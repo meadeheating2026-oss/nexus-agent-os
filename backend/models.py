@@ -8,87 +8,140 @@ def to_dict(model: BaseModel) -> Dict[str, Any]:
     return model.dict()
 
 
-class ToolCreate(BaseModel):
-    slug: str
-    name: str
-    category: str = "custom"
-    description: str
-    execution_type: str = "http_api"  # builtin | http_api | webhook | data_template
-    endpoint_url: str = ""
-    http_method: str = "POST"
-    headers_json: Dict[str, str] = Field(default_factory=dict)
-    payload_template: str = ""
+# ==================== AUTH & ACCOUNT ====================
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    company_name: str = ""
+    plan_code: str = "free_trial"
 
 
-class ToolTestRequest(BaseModel):
-    sample_input: str = "اختبار تشغيل الأداة"
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
-class AgentCreate(BaseModel):
+class TenantByokUpdate(BaseModel):
+    provider: str = "openrouter"
+    api_key: str = ""
+
+
+# ==================== BILLING, SUBSCRIPTIONS & VOUCHERS ====================
+
+class CheckoutRequest(BaseModel):
+    plan_id: int
+    payment_method: str = "manual_transfer"  # stripe | manual_transfer
+    payment_reference: str = ""
+
+
+class VoucherRedeemRequest(BaseModel):
+    code: str
+
+
+class AdminVoucherCreate(BaseModel):
+    code: str
+    plan_id: Optional[int] = None
+    bonus_credits: float = 5000.0
+    max_uses: int = 10
+
+
+class AdminPlanUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    monthly_price_usd: Optional[float] = None
+    included_credits: Optional[float] = None
+    max_agents: Optional[int] = None
+    allow_swarm: Optional[bool] = None
+    allow_custom_tools: Optional[bool] = None
+    allow_api_access: Optional[bool] = None
+    allow_autonomous_cron: Optional[bool] = None
+
+
+class AdminCreditAdjust(BaseModel):
+    credits_delta: float
+    note: str = "تعديل رصيد إداري"
+
+
+# ==================== AGENTS, TOOLS & MISSIONS ====================
+
+class AgentCreateRequest(BaseModel):
     name: str
     role_title: str
     domain: str
     description: str
     system_prompt: str
     model: str = "google/gemini-2.5-flash"
+    temperature: float = 0.3
     installed_tools: List[str] = Field(default_factory=list)
     can_delegate: bool = True
-    trigger_type: str = "manual"  # manual | cron | webhook
+    max_iterations: int = 5
+    trigger_type: str = "manual"
     cron_interval_minutes: int = 60
-    price_per_run: float = 25.0
-    max_cost_usd: float = 0.50
-    memory_notes: str = ""
+    is_marketplace_public: bool = False
+    marketplace_credit_fee: float = 0.0
 
 
-class AgentUpdate(BaseModel):
+class AgentUpdateRequest(BaseModel):
     name: Optional[str] = None
     role_title: Optional[str] = None
     domain: Optional[str] = None
     description: Optional[str] = None
     system_prompt: Optional[str] = None
     model: Optional[str] = None
+    temperature: Optional[float] = None
     installed_tools: Optional[List[str]] = None
     can_delegate: Optional[bool] = None
+    max_iterations: Optional[int] = None
     trigger_type: Optional[str] = None
     cron_interval_minutes: Optional[int] = None
-    price_per_run: Optional[float] = None
-    max_cost_usd: Optional[float] = None
     status: Optional[str] = None
-    memory_notes: Optional[str] = None
+    is_marketplace_public: Optional[bool] = None
 
 
-class BlueprintGenerateRequest(BaseModel):
-    idea_prompt: str
-    preferred_domain: str = ""
+class CustomToolCreateRequest(BaseModel):
+    slug: str
+    name: str
+    category: str = "أدوات API خاصة"
+    description: str
+    endpoint_url: str
+    http_method: str = "POST"
+    headers_json: Dict[str, str] = Field(default_factory=dict)
+    body_template: str = ""
+    parameters_schema_json: Dict[str, Any] = Field(default_factory=dict)
 
 
-class MissionRunRequest(BaseModel):
+class MissionExecuteRequest(BaseModel):
     title: str = ""
     goal_prompt: str
-    mode: str = "swarm"  # standalone | swarm
-    orchestration_strategy: str = "auto"  # auto | manual
-    selected_agent_ids: List[int] = Field(default_factory=list)
-    estimated_value_usd: Optional[float] = None
+    execution_mode: str = "standalone"  # standalone | swarm_sequential | swarm_orchestrated
+    agent_ids: List[int] = Field(default_factory=list)
 
 
-class SettingsUpdate(BaseModel):
-    active_provider: str = "simulation"
+class ApiKeyCreateRequest(BaseModel):
+    label: str = "Production Integration Key"
+
+
+class LlmTestRequest(BaseModel):
+    provider: str
+    api_key: str
+    base_url: str = ""
+    model: str = ""
+
+
+class AdminPlatformConfigUpdate(BaseModel):
+    platform_name: Optional[str] = None
+    active_llm_provider: Optional[str] = None
     openrouter_api_key: Optional[str] = None
-    openai_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
-    custom_base_url: Optional[str] = None
-    custom_api_key: Optional[str] = None
-    default_model: str = "google/gemini-2.5-flash"
-    cfo_auto_pause: bool = True
-    qa_gate_enabled: bool = True
-    saas_platform_name: str = "Nexus AgentOS"
-    saas_credit_markup_x: float = 4.0
-
-
-class SaasClientCreate(BaseModel):
-    client_name: str
-    company: str
-    plan_name: str = "باقة الشركات الذكية (Pro Swarm)"
-    monthly_fee_usd: float = 249.0
-    credits_balance: float = 1000.0
-    assigned_agent_ids: List[int] = Field(default_factory=list)
+    openai_api_key: Optional[str] = None
+    custom_llm_base_url: Optional[str] = None
+    custom_llm_api_key: Optional[str] = None
+    default_model: Optional[str] = None
+    usd_to_credits_rate: Optional[float] = None
+    markup_multiplier: Optional[float] = None
+    allow_tenant_byok: Optional[bool] = None
+    stripe_secret_key: Optional[str] = None
+    stripe_publishable_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+    manual_payment_instructions: Optional[str] = None

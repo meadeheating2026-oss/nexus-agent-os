@@ -17,8 +17,8 @@ COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 RUN mkdir -p /app/data
-ENV NEXUS_DB_PATH=/app/data/nexus_os.db
+ENV NEXUS_DB_PATH=/app/data/nexus_enterprise.db
 
 EXPOSE 8000
 WORKDIR /app/backend
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
