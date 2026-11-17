@@ -1,0 +1,14 @@
+services:
+  nexus-agent-os:
+    build: .
+    container_name: nexus-agent-os
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - nexus_os_data:/app/data
+    environment:
+      - NEXUS_DB_PATH=/app/data/nexus_os.db
+
+volumes:
+  nexus_os_data:

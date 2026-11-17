@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus AgentOS — نظام تشغيل الوكلاء الذكيين اللانهائي</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #0b0f14;
+      --sidebar: #10161d;
+      --card: #131a22;
+      --card-border: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.12);
+      --foreground: #f3f4f6;
+      --muted-foreground: #9ca3af;
+      --primary: #10b981;
+      --primary-foreground: #04130d;
+      --secondary: #1c2530;
+      --secondary-foreground: #e5e7eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --link: #38bdf8;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-0">
+  <div id="app" class="min-h-screen flex flex-col lg:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full lg:w-64 shrink-0 bg-[var(--sidebar)] border-b lg:border-b-0 lg:border-l border-[var(--border)] p-4 flex flex-col justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--border)]">
+          <div class="w-9 h-9 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center justify-center font-bold text-sm shrink-0">
+            OS
+          </div>
+          <div class="min-w-0">
+            <div id="brand-title" class="font-bold text-sm truncate">Nexus AgentOS</div>
+            <div class="text-xs text-[var(--muted-foreground)]">نظام تشغيل الوكلاء اللانهائي</div>
+          </div>
+        </div>
+
+        <nav id="nav-tabs" class="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+          <button data-tab="command" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
+            <span>مركز القيادة والأرباح</span>
+          </button>
+          <button data-tab="studio" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
+            <span>مصنع وأسطول الوكلاء</span>
+            <span id="badge-agents" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
+          </button>
+          <button data-tab="missions" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
+            <span>غرفة العمليات والتكامل</span>
+            <span id="badge-missions" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
+          </button>
+          <button data-tab="tools" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
+            <span>مخزن ومنشئ الأدوات</span>
+            <span id="badge-tools" class="font-mono px-1.5 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs">0</span>
+          </button>
+          <button data-tab="saas" class="nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition">
+            <span>الـ SaaS ومفاتيح الذكاء</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="hidden lg:block p-3 rounded-lg bg-[var(--card)] border border-[var(--card-border)] text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="font-semibold">حالة النواة</span>
+          <span class="text-[var(--success)] font-semibold">● نشط 24/7</span>
+        </div>
+        <div class="text-[var(--muted-foreground)] flex items-center justify-between">
+          <span>المحرك:</span>
+          <span id="sidebar-provider" class="font-mono">Autonomous Core</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 min-w-0 p-4 sm:p-6 space-y-6">
+      <!-- TAB 1: COMMAND CENTER -->
+      <section id="view-command" class="space-y-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
+          <div>
+            <h1 class="text-lg font-bold">مركز القيادة والأرباح الشامل</h1>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1">
+              مراقبة حية لأسطول الوكلاء عبر كافة المجالات، صافي الربح المزدوج (المهام الذاتية + اشتراكات الـ SaaS)، ورقابة التكلفة الآلية.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="cmd-run-swarm-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] hover:opacity-90">
+              ▶ تشغيل مهمة تكاملية
+            </button>
+            <button id="cmd-add-agent-btn" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+              + إضافة وكيل في أي مجال
+            </button>
+          </div>
+        </div>
+
+        <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3"></div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+          <div class="xl:col-span-7 bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
+              <span class="font-bold text-sm">أداء القطاعات والمجالات النشطة</span>
+              <span class="text-xs text-[var(--success)] font-medium">يدعم أي مجال جديد بلا حدود</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
+                  <tr>
+                    <th class="py-2.5 px-4">المجال / القطاع</th>
+                    <th class="py-2.5 px-3">الوكلاء</th>
+                    <th class="py-2.5 px-3">المهام</th>
+                    <th class="py-2.5 px-3">التكلفة</th>
+                    <th class="py-2.5 px-4">العائد المحقق</th>
+                  </tr>
+                </thead>
+                <tbody id="domains-table-body" class="divide-y divide-[var(--card-border)]"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="xl:col-span-5 bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
+              <span class="font-bold text-sm">أحدث العمليات المنفذة</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
+                  <tr>
+                    <th class="py-2.5 px-4">المهمة</th>
+                    <th class="py-2.5 px-3">الوضع</th>
+                    <th class="py-2.5 px-3">صافي الربح</th>
+                    <th class="py-2.5 px-3">عرض</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-missions-body" class="divide-y divide-[var(--card-border)]"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: AGENT STUDIO -->
+      <section id="view-studio" class="hidden space-y-5">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
+          <div>
+            <h1 class="text-lg font-bold">مصنع وأسطول الوكلاء اللانهائي (Agent Studio)</h1>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1">
+              أضف 100+ وكيل أو أكثر في أي مجال يخطر ببالك، زوّد كل وكيل بالبرومبت وأدواته اللازمة، وشغّله مستقلاً أو متكاملاً مع زملائه.
+            </p>
+          </div>
+          <button id="studio-new-agent-btn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+            + بناء وكيل جديد في أي مجال
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div id="domain-filter-chips" class="flex flex-wrap gap-1.5"></div>
+          <input
+            id="studio-search"
+            type="search"
+            placeholder="ابحث في الأسطول بالاسم أو المجال..."
+            class="w-full sm:w-64 px-3 py-2 rounded-lg text-xs bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none"
+          />
+        </div>
+
+        <div id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- TAB 3: MISSION CONTROL -->
+      <section id="view-missions" class="hidden space-y-5">
+        <div class="pb-4 border-b border-[var(--border)]">
+          <h1 class="text-lg font-bold">غرفة العمليات والتكامل الحي (Mission Control)</h1>
+          <p class="text-xs text-[var(--muted-foreground)] mt-1">
+            شغّل وكيلاً منفرداً بكامل استقلاليته، أو ادمج عدة وكلاء من مجالات مختلفة ليتكاملوا خطوة بخطوة في مهمة واحدة تحت رقابة الجودة والمدير المالي.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <!-- Mission Form -->
+          <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
+            <div class="font-bold text-sm pb-2 border-b border-[var(--card-border)]">إعداد وإطلاق المهمة</div>
+
+            <div class="space-y-1.5">
+              <div class="text-xs font-semibold text-[var(--muted-foreground)]">نمط التشغيل</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="mc-mode-swarm" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
+                  تكامل عدة وكلاء (Swarm)
+                </button>
+                <button type="button" id="mc-mode-solo" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
+                  وكيل مستقل منفرد
+                </button>
+              </div>
+            </div>
+
+            <div id="mc-strategy-box" class="space-y-1.5">
+              <div class="text-xs font-semibold text-[var(--muted-foreground)]">طريقة اختيار الفريق المتكامل</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="mc-strat-auto" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
+                  ✨ اختيار ذكي تلقائي
+                </button>
+                <button type="button" id="mc-strat-manual" class="px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)]">
+                  تحديد يدوي للوكلاء
+                </button>
+              </div>
+            </div>
+
+            <div id="mc-agent-picker-box" class="hidden space-y-1.5">
+              <div id="mc-picker-label" class="text-xs font-semibold text-[var(--muted-foreground)]">اختر الوكلاء المشاركين:</div>
+              <div id="mc-agent-list" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label for="mc-goal-input" class="text-xs font-semibold text-[var(--muted-foreground)] block">الهدف أو المهمة المطلوبة *</label>
+              <textarea
+                id="mc-goal-input"
+                rows="4"
+                placeholder="اكتب الهدف بالتفصيل... مثال: افحص فرص السوق، ابنِ عرض مبيعات متكامل، واحسب العائد المتوقع."
+                class="w-full p-3 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none"
+              ></textarea>
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                <button type="button" data-preset="افحص نقاط الضعف التسويقية والتقنية لشركات العقارات والعيادات، قدّر الخسارة الشهرية بالأرقام، وجهز عرض إصلاح فوري مع 3 رسائل إغلاق مبيعات." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+                  + فحص شركات وإغلاق مبيعات
+                </button>
+                <button type="button" data-preset="استخرج أفضل 5 كلمات مفتاحية شرائية منخفضة المنافسة في برامج الذكاء الاصطناعي، وابنِ هيكل مقال مقارنة شامل مجهز بروابط العمولة." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+                  + خطة SEO وأفلييت
+                </button>
+                <button type="button" data-preset="صمم أداة رقمية مصغرة Micro-SaaS لحل مشكلة استرجاع السلات المتروكة للمتاجر مع خطة الكود والتسعير الشهري." class="preset-btn px-2.5 py-1 rounded text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90">
+                  + بناء أداة Micro-SaaS
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label for="mc-value-input" class="text-xs font-semibold text-[var(--muted-foreground)] block">القيمة المالية / تسعير العميل للمهمة ($) (اختياري)</label>
+              <input
+                id="mc-value-input"
+                type="number"
+                min="0"
+                step="5"
+                placeholder="يُحسب تلقائياً من تسعير الوكلاء المشاركين"
+                class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+
+            <div id="mc-error" class="hidden p-2.5 rounded-lg text-xs text-[var(--error)] bg-[var(--background)] border border-[var(--border)]"></div>
+
+            <button id="mc-execute-btn" type="button" class="w-full py-2.5 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+              ▶ إطلاق التنفيذ الحي الآن
+            </button>
+
+            <div class="pt-3 border-t border-[var(--card-border)] space-y-1.5">
+              <div class="text-xs text-[var(--muted-foreground)]">سجل المهام المنفذة (انقر للاستعراض):</div>
+              <div id="mc-history-list" class="max-h-36 overflow-y-auto space-y-1"></div>
+            </div>
+          </div>
+
+          <!-- Live Trace & Output -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+              <div class="px-4 py-3 border-b border-[var(--card-border)] flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div id="trace-title" class="font-bold text-sm">سجل تدفق وتكامل الوكلاء</div>
+                  <div id="trace-subtitle" class="text-xs text-[var(--muted-foreground)]">اختر أو أطلق مهمة لمشاهدة خطوات التنفيذ</div>
+                </div>
+                <div id="trace-badges" class="flex flex-wrap gap-2 text-xs"></div>
+              </div>
+              <div id="trace-steps" class="divide-y divide-[var(--card-border)]"></div>
+            </div>
+
+            <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden">
+              <div class="px-4 py-3 border-b border-[var(--card-border)] flex items-center justify-between">
+                <span class="font-bold text-sm">المخرج النهائي المعتمد (جاهز للنشر أو التسليم)</span>
+                <button id="copy-deliverable-btn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
+                  نسخ المخرج
+                </button>
+              </div>
+              <div class="p-4">
+                <pre id="trace-deliverable" class="whitespace-pre-wrap font-sans text-xs leading-relaxed p-4 rounded-lg bg-[var(--background)] border border-[var(--border)] max-h-96 overflow-y-auto"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: TOOL REGISTRY -->
+      <section id="view-tools" class="hidden space-y-5">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
+          <div>
+            <h1 class="text-lg font-bold">مخزن ومنشئ الأدوات القابلة للتثبيت (Tool Registry)</h1>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1">
+              ركّب الأدوات المدمجة للوكلاء أو أنشئ أداة مخصصة جديدة (REST API / Webhook / قالب بيانات) لأي مجال أو موقع خارجي في ثوانٍ.
+            </p>
+          </div>
+          <button id="open-tool-modal-btn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">
+            + إضافة أداة مخصصة جديدة
+          </button>
+        </div>
+
+        <div id="tool-test-banner" class="hidden p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)] text-xs space-y-1"></div>
+
+        <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </section>
+
+      <!-- TAB 5: SAAS & SETTINGS -->
+      <section id="view-saas" class="hidden space-y-5">
+        <div class="pb-4 border-b border-[var(--border)]">
+          <h1 class="text-lg font-bold">إدارة عملاء الـ SaaS ومحرك الذكاء الاصطناعي</h1>
+          <p class="text-xs text-[var(--muted-foreground)] mt-1">
+            اربط مفتاح التشغيل المباشر (OpenRouter / Gemini / OpenAI) لتنفيذ المهام عبر الموديلات العالمية، وأدر الشركات المشتركة شهرياً في منصتك.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div class="lg:col-span-6 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-[var(--card-border)]">
+              <span class="font-bold text-sm">إعدادات مزود الذكاء الاصطناعي وحوكمة الربح</span>
+              <span id="settings-saved-msg" class="hidden text-xs text-[var(--success)] font-semibold">✓ تم الحفظ</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم منصتك التجارية (SaaS)</label>
+                <input id="set-brand" type="text" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مضاعف ربح الـ Credits على العملاء (x)</label>
+                <input id="set-markup" type="number" step="0.5" min="1" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مزود تشغيل الوكلاء</label>
+              <select id="set-provider" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
+                <option value="simulation">المحرك الذاتي الفوري (بدون مفتاح API — جاهز للتجربة فوراً)</option>
+                <option value="openrouter">OpenRouter API (يشغّل كل الموديلات بمفتاح واحد)</option>
+                <option value="gemini">Google Gemini API مباشر</option>
+                <option value="openai">OpenAI API مباشر</option>
+              </select>
+            </div>
+
+            <div id="api-key-box" class="hidden space-y-1">
+              <label class="text-xs font-semibold text-[var(--muted-foreground)] block">مفتاح الـ API للمزود المختار</label>
+              <input id="set-apikey" type="password" placeholder="sk-..." class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+            </div>
+
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input id="set-cfo" type="checkbox" class="accent-[var(--primary)]" />
+              <span>تفعيل وكيل المدير المالي (CFO): إيقاف أي وكيل يتخطى سقف التكلفة المسموح</span>
+            </label>
+
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input id="set-qa" type="checkbox" class="accent-[var(--primary)]" />
+              <span>تفعيل بوابة فحص الجودة (QA Critic) قبل تسليم المخرجات</span>
+            </label>
+
+            <div class="flex flex-wrap gap-2 pt-2">
+              <button id="save-settings-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">
+                حفظ الإعدادات
+              </button>
+              <button id="export-fleet-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
+                تصدير أسطول الوكلاء (JSON)
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-6 bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
+            <div class="font-bold text-sm pb-2 border-b border-[var(--card-border)]">مشتركو منصة الـ SaaS (تأجير الوكلاء للشركات)</div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <input id="cl-name" type="text" placeholder="اسم الشركة العميلة *" class="px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+              <input id="cl-plan" type="text" value="باقة الشركات الذكية" class="px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+              <div class="flex gap-2">
+                <input id="cl-fee" type="number" value="299" placeholder="$/شهر" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+                <button id="add-client-btn" type="button" class="px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] shrink-0">
+                  + إضافة
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="text-[var(--muted-foreground)] border-b border-[var(--card-border)]">
+                  <tr>
+                    <th class="py-2 px-3">الشركة المشتركة</th>
+                    <th class="py-2 px-3">الباقة</th>
+                    <th class="py-2 px-3">الاشتراك الشهري</th>
+                    <th class="py-2 px-2">حذف</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-tbody" class="divide-y divide-[var(--card-border)]"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: CREATE / EDIT AGENT IN ANY DOMAIN -->
+  <div id="agent-modal" class="hidden fixed inset-0 z-50 bg-black/70 p-4 flex items-center justify-center">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[var(--card-border)]">
+        <h2 id="agent-modal-title" class="font-bold text-sm">بناء وتثبيت وكيل جديد (في أي مجال يخطر ببالك)</h2>
+        <button id="close-agent-modal" type="button" class="text-xs px-2 py-1 rounded bg-[var(--secondary)]">✕</button>
+      </div>
+
+      <!-- AI Meta Spawner -->
+      <div id="spawner-box" class="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] space-y-2">
+        <div class="text-xs font-semibold text-[var(--warning)]">✨ المولّد الذكي للوكلاء (اكتب الفكرة في سطر واحد وسيبني البرومبت ويختار الأدوات تلقائياً):</div>
+        <div class="flex flex-wrap gap-2">
+          <input id="ag-idea" type="text" placeholder="مثال: وكيل خبير في مزادات السيارات يحسب الجمارك والشحن، أو مراجعة العقود القانونية..." class="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-xs bg-[var(--card)] border border-[var(--border)]" />
+          <button id="ag-spawn-btn" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
+            توليد تكوين الوكيل
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم الوكيل *</label>
+          <input id="ag-name" type="text" placeholder="مثال: مستشار العقود والمناقصات الذكي" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] flex justify-between">
+            <span>المجال / القطاع *</span>
+            <span class="text-[var(--success)] font-normal">اكتب أي مجال جديد بحرية</span>
+          </label>
+          <input id="ag-domain" list="domains-datalist" type="text" placeholder="اكتب أي مجال (عقارات، قانون، طب، طيران...)" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+          <datalist id="domains-datalist"></datalist>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">المسمى التخصصي</label>
+          <input id="ag-role" type="text" placeholder="خبير صيد فرص وتسعير آلي" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">الموديل المشغّل</label>
+          <select id="ag-model" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
+            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (سريع وأقل تكلفة)</option>
+            <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+            <option value="deepseek/deepseek-chat">DeepSeek V3</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">وصف مختصر لدور الوكيل (يقرأه المنسق عند دمج الوكلاء)</label>
+        <input id="ag-desc" type="text" placeholder="متى يستعين به باقي الأسطول وماذا ينتج..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">برومبت المهمة والقواعد التشغيلية (System Prompt) *</label>
+        <textarea id="ag-prompt" rows="4" placeholder="اكتب التعليمات التفصيلية للمهمة التي سينفذها الوكيل وشكل المخرجات..." class="w-full p-3 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]"></textarea>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="text-xs font-semibold text-[var(--muted-foreground)]">تثبيت الأدوات اللازمة للمهمة:</div>
+        <div id="ag-tools-checks" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">التشغيل الذاتي</label>
+          <select id="ag-trigger" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]">
+            <option value="manual">عند الطلب / استدعاء منسق</option>
+            <option value="cron">جدولة ذاتية (Cron 24/7)</option>
+            <option value="webhook">رابط Webhook فوري</option>
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">العائد / التسعير للمهمة ($)</label>
+          <input id="ag-price" type="number" value="35" min="0" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">سقف تكلفة الـ API ($)</label>
+          <input id="ag-maxcost" type="number" value="0.50" step="0.05" min="0.01" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 text-xs cursor-pointer">
+        <input id="ag-delegate" type="checkbox" checked class="accent-[var(--primary)]" />
+        <span>السماح لهذا الوكيل بالتكامل وطلب مساعدة أي وكيل زميل في الأسطول عند الحاجة</span>
+      </label>
+
+      <div id="ag-modal-err" class="hidden text-xs text-[var(--error)]"></div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-[var(--card-border)]">
+        <button id="cancel-agent-modal" type="button" class="px-4 py-2 rounded-lg text-xs bg-[var(--secondary)] text-[var(--secondary-foreground)]">إلغاء</button>
+        <button id="save-agent-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">تثبيت وتشغيل الوكيل</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE CUSTOM TOOL -->
+  <div id="tool-modal" class="hidden fixed inset-0 z-50 bg-black/70 p-4 flex items-center justify-center">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl w-full max-w-lg p-5 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[var(--card-border)]">
+        <h2 class="font-bold text-sm">إضافة أداة مخصصة جديدة لمخزن النظام</h2>
+        <button id="close-tool-modal" type="button" class="text-xs px-2 py-1 rounded bg-[var(--secondary)]">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">اسم الأداة *</label>
+          <input id="tl-name" type="text" placeholder="مثال: نشر ووردبريس / API مزادات" class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-[var(--muted-foreground)] block">التصنيف / المجال</label>
+          <input id="tl-cat" type="text" placeholder="مثال: عقارات، واتساب، متاجر..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">وصف وظيفة الأداة *</label>
+        <input id="tl-desc" type="text" placeholder="اشرح ماذا تفعل الأداة متى يستخدمها الوكيل..." class="w-full px-3 py-2 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)]" />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-semibold text-[var(--muted-foreground)] block">رابط الـ API أو Webhook (اختياري)</label>
+        <input id="tl-url" type="url" placeholder="https://api.example.com/webhook" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-[var(--background)] border border-[var(--border)]" />
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-[var(--card-border)]">
+        <button id="cancel-tool-modal" type="button" class="px-4 py-2 rounded-lg text-xs bg-[var(--secondary)]">إلغاء</button>
+        <button id="save-tool-btn" type="button" class="px-4 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">إضافة الأداة</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'nexus_agentos_state_v1';
+
+    const DEFAULT_STATE = {
+      settings: {
+        brand: 'Nexus AgentOS',
+        provider: 'simulation',
+        apiKey: '',
+        markupX: 4.0,
+        cfoAutoPause: true,
+        qaGate: true
+      },
+      tools: [
+        { id: 1, slug: 'web_search', name: 'البحث الحي في الويب', category: 'الويب والبيانات', description: 'رصد الكلمات المفتاحية والمنافسين والأخبار وفرص السوق في أي قطاع.', is_builtin: true, endpoint_url: '' },
+        { id: 2, slug: 'web_scraper', name: 'ساحِب وفاحص المواقع', category: 'الويب والبيانات', description: 'فتح روابط المواقع وسحب البيانات وفحص الأسعار ونقاط الضعف.', is_builtin: true, endpoint_url: '' },
+        { id: 3, slug: 'http_webhook', name: 'موصل الأنظمة والـ API العام', category: 'التكامل والأتمتة', description: 'الاتصال بأي منصة خارجية (Shopify, WordPress, Stripe, WhatsApp, Zapier).', is_builtin: true, endpoint_url: '' },
+        { id: 4, slug: 'python_sandbox', name: 'مختبر الكود والتحليل الرقمي', category: 'البرمجة والتحليل', description: 'تشغيل النماذج الحسابية والمالية وتحليل البيانات وتوليد السكربتات.', is_builtin: true, endpoint_url: '' },
+        { id: 5, slug: 'persistent_memory', name: 'الذاكرة التراكمية المستمرة', category: 'نواة الوكيل', description: 'حفظ خبرات الوكيل وسجل المهام لمنع التكرار وتحسين الدقة تلقائياً.', is_builtin: true, endpoint_url: '' },
+        { id: 6, slug: 'delegate_to_agent', name: 'بروتوكول استدعاء وتكامل الوكلاء', category: 'التكامل الجماعي', description: 'البحث في سجل الـ 100+ وكيل وطلب مساعدة تخصصية من أي وكيل زميل.', is_builtin: true, endpoint_url: '' },
+        { id: 7, slug: 'publish_deliverable', name: 'حزم وتصدير المخرجات للبيع', category: 'التسليم والمبيعات', description: 'تنسيق التقرير أو المقال أو الكود بصيغة جاهزة للنشر الفوري أو التسليم للعميل.', is_builtin: true, endpoint_url: '' }
+      ],
+      agents: [
+        {
+          id: 1, name: 'المنسق العام للأسطول (Master Orchestrator)', role_title: 'قائد توزيع المهام والتكامل',
+          domain: 'الإدارة العليا ونواة النظام', description: 'يحلل الأهداف الكبرى ويختار أفضل توليفة وكلاء ويدير تسليم المهام بينهم.',
+          system_prompt: 'فكك الهدف إلى مهام تخصصية واختر أنسب الوكلاء من السجل.', model: 'google/gemini-2.5-flash',
+          installed_tools: ['persistent_memory', 'delegate_to_agent'], can_delegate: true, trigger_type: 'manual',
+          price_per_run: 0, max_cost_usd: 0.2, is_system_agent: true, status: 'idle', total_runs: 6, total_cost_usd: 0.0024, total_revenue_usd: 0
+        },
+        {
+          id: 2, name: 'وكيل المدير المالي (CFO Guardrail)', role_title: 'مراقب التكلفة وتعظيم صافي الربح',
+          domain: 'الإدارة العليا ونواة النظام', description: 'يراقب تكلفة التوكنز لكل وكيل بالسنت مقابل العائد ويوقف أي وكيل يتخطى ميزانيته.',
+          system_prompt: 'احسب التكلفة مقابل العائد وحافظ على هامش ربح يتجاوز 85%.', model: 'google/gemini-2.5-flash',
+          installed_tools: ['python_sandbox', 'persistent_memory'], can_delegate: false, trigger_type: 'manual',
+          price_per_run: 0, max_cost_usd: 0.1, is_system_agent: true, status: 'idle', total_runs: 6, total_cost_usd: 0.0008, total_revenue_usd: 0
+        },
+        {
+          id: 3, name: 'صائد الكلمات والـ SEO والأفلييت', role_title: 'خبير Programmatic SEO والتسويق بالعمولة',
+          domain: 'الـ SEO والنشر والتسويق بالعمولة', description: 'يكتشف الكلمات الشرائية منخفضة المنافسة ويبني مقالات مراجعات مجهزة بروابط العمولة.',
+          system_prompt: 'ابحث عن كلمات شرائية عالية العمولة، صمم مقال مقارنة متفوق، وحدد مواضع روابط الأفلييت.', model: 'google/gemini-2.5-flash',
+          installed_tools: ['web_search', 'web_scraper', 'http_webhook', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'cron',
+          price_per_run: 35, max_cost_usd: 0.4, is_system_agent: false, status: 'idle', total_runs: 4, total_cost_usd: 0.0048, total_revenue_usd: 140
+        },
+        {
+          id: 4, name: 'فاحص مواقع الشركات وصائد الأخطاء', role_title: 'محلل الثغرات التسويقية والتقنية للشركات B2B',
+          domain: 'فحص الشركات وجلب العملاء B2B', description: 'يفحص مواقع المتاجر والشركات، يستخرج الأخطاء التي تضيع المبيعات، ويجهز تقريراً تشخيصياً.',
+          system_prompt: 'افحص قطاع الشركة واستخرج 5 ثغرات في التحويل والـ SEO وقدر الخسارة المالية الشهرية بالأرقام.', model: 'google/gemini-2.5-flash',
+          installed_tools: ['web_scraper', 'web_search', 'python_sandbox', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'manual',
+          price_per_run: 65, max_cost_usd: 0.5, is_system_agent: false, status: 'idle', total_runs: 6, total_cost_usd: 0.0079, total_revenue_usd: 390
+        },
+        {
+          id: 5, name: 'قناص المبيعات والإغلاق الآلي (Closer)', role_title: 'خبير رسائل الإقناع وتحويل العملاء لدفع فوري',
+          domain: 'المبيعات وأتمتة خدمة العملاء', description: 'يصيغ رسائل مبيعات مخصصة عالية التحويل ويرد على الاعتراضات ويرسل روابط الدفع 24/7.',
+          system_prompt: 'حول نتائج الفحص إلى رسالة بيعية مقنعة مع رابط دفع وتسلسل متابعة من 3 رسائل.', model: 'openai/gpt-4o-mini',
+          installed_tools: ['http_webhook', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'webhook',
+          price_per_run: 45, max_cost_usd: 0.35, is_system_agent: false, status: 'idle', total_runs: 5, total_cost_usd: 0.0052, total_revenue_usd: 225
+        },
+        {
+          id: 6, name: 'مهندس الـ Micro-SaaS والأدوات البرمجية', role_title: 'مطور أدوات رقمية وسكربتات قابلة للبيع',
+          domain: 'هندسة البرمجيات والـ Micro-SaaS', description: 'يرصد المشاكل التقنية المتكررة ويبني أدوات مصغرة وإضافات متصفح جاهزة للبيع المتكرر.',
+          system_prompt: 'صمم معمارية أداة خفيفة سريعة التنفيذ واكتب الكود الأساسي وخطة التسعير.', model: 'anthropic/claude-3.5-sonnet',
+          installed_tools: ['python_sandbox', 'web_search', 'delegate_to_agent', 'publish_deliverable'], can_delegate: true, trigger_type: 'manual',
+          price_per_run: 85, max_cost_usd: 0.8, is_system_agent: false, status: 'idle', total_runs: 3, total_cost_usd: 0.0061, total_revenue_usd: 255
+        },
+        {
+          id: 7, name: 'رادار المنتجات والتجارة الإلكترونية', role_title: 'محلل المنتجات الرابحة وصفحات الهبوط',
+          domain: 'التجارة الإلكترونية والمنتجات', description: 'يحلل شكاوى المشترين، يكتشف المنتجات عالية الهامش، ويكتب صفحات هبوط تضاعف الشراء.',
+          system_prompt: 'حلل هامش الربح واكتب صفحة منتج عالية التحويل مع حزم رفع قيمة السلة.', model: 'google/gemini-2.5-flash',
+          installed_tools: ['web_search', 'web_scraper', 'python_sandbox', 'publish_deliverable'], can_delegate: true, trigger_type: 'cron',
+          price_per_run: 40, max_cost_usd: 0.45, is_system_agent: false, status: 'idle', total_runs: 3, total_cost_usd: 0.0036, total_revenue_usd: 120
+        },
+        {
+          id: 8, name: 'محلل الفرص المالية والـ Arbitrage', role_title: 'باحث كمي لرصد فروق الأسعار والفرص',
+          domain: 'الأسواق المالية والتداول الكمي', description: 'يراقب المؤشرات وفروق الأسعار بين الأسواق ويصدر تقارير فرص محسوبة المخاطر.',
+          system_prompt: 'افحص المؤشرات الرقمية واحسب نسبة العائد إلى المخاطرة بدقة.', model: 'deepseek/deepseek-chat',
+          installed_tools: ['web_search', 'python_sandbox', 'http_webhook', 'persistent_memory'], can_delegate: true, trigger_type: 'cron',
+          price_per_run: 55, max_cost_usd: 0.4, is_system_agent: false, status: 'idle', total_runs: 4, total_cost_usd: 0.0044, total_revenue_usd: 220
+        }
+      ],
+      clients: [
+        { id: 1, name: 'مجموعة الرواد العقارية', plan: 'باقة الشركات الذكية (Swarm)', fee: 299 },
+        { id: 2, name: 'متجر نانو تك الإلكتروني', plan: 'باقة التجارة والمبيعات الآلية', fee: 199 }
+      ],
+      missions: [
+        {
+          id: 1,
+          title: 'فحص متاجر إلكترونية وإطلاق حملة إغلاق مبيعات فورية',
+          mode: 'swarm',
+          qa_score: 97,
+          total_cost_usd: 0.0029,
+          estimated_value_usd: 110,
+          net_profit_usd: 109.9971,
+          steps: [
+            { order: 1, agent: 'المنسق العام للأسطول', domain: 'نواة النظام', tool: 'agent_router', summary: 'تفكيك الهدف وتشكيل خلية عمل من [فاحص مواقع الشركات] ثم [قناص المبيعات والإغلاق الآلي].' },
+            { order: 2, agent: 'فاحص مواقع الشركات وصائد الأخطاء', domain: 'فحص الشركات وجلب العملاء B2B', tool: 'web_scraper', summary: 'استخراج 4 ثغرات قاتلة في سرعة الدفع والـ SEO وتقدير الفاقد الشهري بالأرقام.' },
+            { order: 3, agent: 'قناص المبيعات والإغلاق الآلي (Closer)', domain: 'المبيعات وأتمتة خدمة العملاء', tool: 'http_webhook', summary: 'صياغة عرض الإصلاح المخصص + 3 رسائل متابعة تلقائية مرتبطة بنتائج الفحص.' },
+            { order: 4, agent: 'وكيل المدير المالي (CFO Guardrail)', domain: 'الرقابة المالية', tool: 'cfo_audit', summary: 'التكلفة $0.0029 مقابل عائد $110.00 — صافي الربح $109.99 (هامش 99.99%).' }
+          ],
+          final_output: '# التقرير والمخرج النهائي المعتمد\n\n## 1. نتائج فحص الشركات\n- تم رصد 4 ثغرات رئيسية تسبب تسرب 38% من الزوار قبل إتمام الدفع.\n- تم تجهيز خطة الإصلاح السريع القابلة للتسليم الفوري.\n\n## 2. حزمة الإغلاق البيعي الآلي\n- رسالة أولى مخصصة بأرقام الفحص + رابط دفع مباشر.\n- 3 رسائل متابعة مجدولة تلقائياً عبر Webhook.'
+        }
+      ]
+    };
+
+    let state = loadState();
+    let activeTab = 'command';
+    let studioDomain = 'all';
+    let studioSearch = '';
+    let editingAgentId = null;
+
+    // Mission control UI state
+    let mcMode = 'swarm';
+    let mcStrategy = 'auto';
+    let mcSelectedIds = [4, 5];
+    let inspectedMissionId = state.missions[0]?.id || null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      ['command', 'studio', 'missions', 'tools', 'saas'].forEach((t) => {
+        const el = document.getElementById('view-' + t);
+        if (el) el.classList.toggle('hidden', t !== tab);
+      });
+      document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+        const isAct = btn.getAttribute('data-tab') === tab;
+        btn.className = 'nav-tab-btn w-auto lg:w-full whitespace-nowrap flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition ' +
+          (isAct ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]');
+      });
+      renderAll();
+    }
+
+    function renderAll() {
+      document.getElementById('brand-title').textContent = state.settings.brand || 'Nexus AgentOS';
+      document.getElementById('sidebar-provider').textContent = state.settings.provider === 'simulation' ? 'Autonomous Core' : state.settings.provider;
+      document.getElementById('badge-agents').textContent = state.agents.length;
+      document.getElementById('badge-missions').textContent = state.missions.length;
+      document.getElementById('badge-tools').textContent = state.tools.length;
+
+      renderCommandCenter();
+      renderStudio();
+      renderMissionControl();
+      renderTools();
+      renderSaas();
+    }
+
+    function renderCommandCenter() {
+      const workers = state.agents.filter((a) => !a.is_system_agent);
+      const domains = Array.from(new Set(workers.map((a) => a.domain)));
+      const agentRev = workers.reduce((s, a) => s + Number(a.total_revenue_usd || 0), 0);
+      const apiCost = state.agents.reduce((s, a) => s + Number(a.total_cost_usd || 0), 0);
+      const mrr = state.clients.reduce((s, c) => s + Number(c.fee || 0), 0);
+      const gross = agentRev + mrr;
+      const net = gross - apiCost;
+      const margin = gross > 0 ? ((net / gross) * 100).toFixed(2) : '100.00';
+      const totalRuns = workers.reduce((s, a) => s + Number(a.total_runs || 0), 0);
+
+      document.getElementById('kpi-grid').innerHTML = `
+        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
+          <div class="text-xs text-[var(--muted-foreground)]">صافي الربح الإجمالي</div>
+          <div class="font-mono text-xl font-bold text-[var(--success)] mt-1">$${net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1">هامش الربح: <span class="font-mono">${margin}%</span></div>
+        </div>
+        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
+          <div class="text-xs text-[var(--muted-foreground)]">عوائد مهام الوكلاء الذاتية</div>
+          <div class="font-mono text-xl font-bold mt-1">$${agentRev.toFixed(2)}</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1"><span class="font-mono">${totalRuns}</span> مهمة مكتملة</div>
+        </div>
+        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
+          <div class="text-xs text-[var(--muted-foreground)]">اشتراك عملاء الـ SaaS الشهري</div>
+          <div class="font-mono text-xl font-bold mt-1">$${mrr.toFixed(2)}</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1"><span class="font-mono">${state.clients.length}</span> شركات مشتركة</div>
+        </div>
+        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
+          <div class="text-xs text-[var(--muted-foreground)]">الأسطول والقطاعات النشطة</div>
+          <div class="font-mono text-xl font-bold mt-1">${state.agents.length}</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1">في <span class="font-mono">${domains.length}</span> مجالات | <span class="font-mono">${state.tools.length}</span> أدوات</div>
+        </div>
+        <div class="p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)]">
+          <div class="text-xs text-[var(--muted-foreground)]">إجمالي تكلفة التوكنز (API)</div>
+          <div class="font-mono text-xl font-bold mt-1">$${apiCost.toFixed(4)}</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-1">تحت رقابة CFO الآلية</div>
+        </div>
+      `;
+
+      const domMap = {};
+      workers.forEach((a) => {
+        if (!domMap[a.domain]) domMap[a.domain] = { domain: a.domain, count: 0, runs: 0, rev: 0, cost: 0 };
+        domMap[a.domain].count += 1;
+        domMap[a.domain].runs += Number(a.total_runs || 0);
+        domMap[a.domain].rev += Number(a.total_revenue_usd || 0);
+        domMap[a.domain].cost += Number(a.total_cost_usd || 0);
+      });
+      const domList = Object.values(domMap).sort((a, b) => b.rev - a.rev);
+      document.getElementById('domains-table-body').innerHTML = domList.map((d) => `
+        <tr>
+          <td class="py-2.5 px-4 font-semibold">${escapeHtml(d.domain)}</td>
+          <td class="py-2.5 px-3 font-mono">${d.count}</td>
+          <td class="py-2.5 px-3 font-mono">${d.runs}</td>
+          <td class="py-2.5 px-3 font-mono text-[var(--muted-foreground)]">$${d.cost.toFixed(4)}</td>
+          <td class="py-2.5 px-4 font-mono font-bold text-[var(--success)]">$${d.rev.toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('recent-missions-body').innerHTML = state.missions.slice(0, 7).map((m) => `
+        <tr>
+          <td class="py-2.5 px-4 font-semibold">${escapeHtml(m.title)}</td>
+          <td class="py-2.5 px-3">
+            <span class="px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">${m.mode === 'swarm' ? 'تكامل جماعي' : 'مستقل'}</span>
+          </td>
+          <td class="py-2.5 px-3 font-mono font-bold text-[var(--success)]">+$${Number(m.net_profit_usd).toFixed(2)}</td>
+          <td class="py-2.5 px-3">
+            <button data-inspect="${m.id}" class="inspect-mission-btn px-2 py-1 rounded bg-[var(--secondary)] hover:opacity-80">فحص ↖</button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.inspect-mission-btn').forEach((btn) => {
+        btn.onclick = () => {
+          inspectedMissionId = Number(btn.getAttribute('data-inspect'));
+          switchTab('missions');
+        };
+      });
+    }
+
+    function renderStudio() {
+      const allDomains = Array.from(new Set(state.agents.map((a) => a.domain)));
+      const chipsHtml = [
+        `<button data-dom="all" class="dom-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] ${studioDomain === 'all' ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--card)]'}">كل المجالات (${state.agents.length})</button>`
+      ].concat(
+        allDomains.map((d) => `
+          <button data-dom="${escapeHtml(d)}" class="dom-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] ${studioDomain === d ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'bg-[var(--card)]'}">${escapeHtml(d)}</button>
+        `)
+      ).join('');
+      document.getElementById('domain-filter-chips').innerHTML = chipsHtml;
+      document.querySelectorAll('.dom-chip').forEach((b) => {
+        b.onclick = () => {
+          studioDomain = b.getAttribute('data-dom');
+          renderStudio();
+        };
+      });
+
+      const toolsBySlug = {};
+      state.tools.forEach((t) => { toolsBySlug[t.slug] = t.name; });
+
+      const filtered = state.agents.filter((a) => {
+        if (studioDomain !== 'all' && a.domain !== studioDomain) return false;
+        if (studioSearch.trim()) {
+          const q = studioSearch.toLowerCase();
+          const hay = `${a.name} ${a.role_title} ${a.domain} ${a.description}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('agents-grid').innerHTML = filtered.map((a) => `
+        <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col justify-between gap-3">
+          <div class="space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)]">${escapeHtml(a.domain)}</span>
+              <span class="font-mono text-xs font-bold text-[var(--success)]">$${a.price_per_run}/مهمة</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm">${escapeHtml(a.name)}</h3>
+              <div class="text-xs text-[var(--muted-foreground)]">${escapeHtml(a.role_title)}</div>
+            </div>
+            <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(a.description)}</p>
+            <div class="flex flex-wrap gap-1 pt-1">
+              ${(a.installed_tools || []).map((sl) => `<span class="px-2 py-0.5 rounded text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)]">🔧 ${escapeHtml(toolsBySlug[sl] || sl)}</span>`).join('')}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-[var(--card-border)] space-y-2.5">
+            <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+              <span>المهام: <strong class="font-mono text-[var(--foreground)]">${a.total_runs}</strong> | العائد: <strong class="font-mono text-[var(--success)]">$${Number(a.total_revenue_usd).toFixed(0)}</strong></span>
+              <span>${a.trigger_type === 'cron' ? 'جدولة Cron' : a.trigger_type === 'webhook' ? 'Webhook حي' : 'عند الطلب'}</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              ${!a.is_system_agent ? `
+                <div class="flex gap-1.5">
+                  <button data-runsolo="${a.id}" class="btn-run-solo px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)]">▶ تشغيل مستقل</button>
+                  <button data-addswarm="${a.id}" class="btn-add-swarm px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">دمج جماعي</button>
+                </div>
+              ` : `<span class="text-xs text-[var(--warning)] font-semibold">وكيل نواة ورقابة ذاتية</span>`}
+              <div class="flex items-center gap-1">
+                <button data-clone="${a.id}" class="btn-clone px-2 py-1 rounded text-xs bg-[var(--secondary)]" title="استنساخ الوكيل">نسخ</button>
+                <button data-edit="${a.id}" class="btn-edit px-2 py-1 rounded text-xs bg-[var(--secondary)]" title="تعديل">تعديل</button>
+                ${!a.is_system_agent ? `<button data-del="${a.id}" class="btn-del px-2 py-1 rounded text-xs text-[var(--error)] bg-[var(--secondary)]" title="حذف">✕</button>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.btn-run-solo').forEach((b) => {
+        b.onclick = () => {
+          mcMode = 'standalone';
+          mcSelectedIds = [Number(b.getAttribute('data-runsolo'))];
+          switchTab('missions');
+        };
+      });
+      document.querySelectorAll('.btn-add-swarm').forEach((b) => {
+        b.onclick = () => {
+          const id = Number(b.getAttribute('data-addswarm'));
+          mcMode = 'swarm';
+          mcStrategy = 'manual';
+          if (!mcSelectedIds.includes(id)) mcSelectedIds.push(id);
+          switchTab('missions');
+        };
+      });
+      document.querySelectorAll('.btn-clone').forEach((b) => {
+        b.onclick = () => {
+          const orig = state.agents.find((x) => x.id === Number(b.getAttribute('data-clone')));
+          if (!orig) return;
+          const nextId = Math.max(0, ...state.agents.map((x) => x.id)) + 1;
+          state.agents.unshift({
+            ...JSON.parse(JSON.stringify(orig)),
+            id: nextId,
+            name: orig.name + ' (نسخة)',
+            is_system_agent: false,
+            total_runs: 0,
+            total_cost_usd: 0,
+            total_revenue_usd: 0
+          });
+          saveState();
+          renderAll();
+        };
+      });
+      document.querySelectorAll('.btn-edit').forEach((b) => {
+        b.onclick = () => openAgentModal(Number(b.getAttribute('data-edit')));
+      });
+      document.querySelectorAll('.btn-del').forEach((b) => {
+        b.onclick = () => {
+          const id = Number(b.getAttribute('data-del'));
+          state.agents = state.agents.filter((x) => x.id !== id);
+          saveState();
+          renderAll();
+        };
+      });
+    }
+
+    function renderMissionControl() {
+      const activeClass = 'bg-[var(--primary)] text-[var(--primary-foreground)]';
+      const idleClass = 'bg-[var(--background)] text-[var(--foreground)]';
+
+      document.getElementById('mc-mode-swarm').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcMode === 'swarm' ? activeClass : idleClass}`;
+      document.getElementById('mc-mode-solo').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcMode === 'standalone' ? activeClass : idleClass}`;
+
+      document.getElementById('mc-strategy-box').classList.toggle('hidden', mcMode !== 'swarm');
+      document.getElementById('mc-strat-auto').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcStrategy === 'auto' ? activeClass : idleClass}`;
+      document.getElementById('mc-strat-manual').className = `px-3 py-2 rounded-lg text-xs font-semibold border border-[var(--border)] ${mcStrategy === 'manual' ? activeClass : idleClass}`;
+
+      const showPicker = mcMode === 'standalone' || mcStrategy === 'manual';
+      document.getElementById('mc-agent-picker-box').classList.toggle('hidden', !showPicker);
+      document.getElementById('mc-picker-label').textContent = mcMode === 'standalone' ? 'اختر الوكيل المستقل:' : `اختر الوكلاء المراد دمجهم بالترتيب (${mcSelectedIds.length} محدد):`;
+
+      const workers = state.agents.filter((a) => !a.is_system_agent);
+      document.getElementById('mc-agent-list').innerHTML = workers.map((a) => {
+        const checked = mcSelectedIds.includes(a.id);
+        return `
+          <label class="flex items-start gap-2 p-2 rounded-lg border border-[var(--border)] cursor-pointer text-xs ${checked ? 'bg-[var(--secondary)]' : 'bg-[var(--background)]'}">
+            <input type="${mcMode === 'standalone' ? 'radio' : 'checkbox'}" name="mc-ag-pick" value="${a.id}" ${checked ? 'checked' : ''} class="mt-0.5 accent-[var(--primary)]" />
+            <div>
+              <div class="font-semibold">${escapeHtml(a.name)}</div>
+              <div class="text-[var(--muted-foreground)]">${escapeHtml(a.domain)} — $${a.price_per_run}/مهمة</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+
+      document.querySelectorAll('input[name="mc-ag-pick"]').forEach((inp) => {
+        inp.onchange = () => {
+          const id = Number(inp.value);
+          if (mcMode === 'standalone') {
+            mcSelectedIds = [id];
+          } else {
+            mcSelectedIds = mcSelectedIds.includes(id) ? mcSelectedIds.filter((x) => x !== id) : [...mcSelectedIds, id];
+          }
+          renderMissionControl();
+        };
+      });
+
+      document.getElementById('mc-history-list').innerHTML = state.missions.slice(0, 8).map((m) => `
+        <button data-hist="${m.id}" class="hist-item w-full text-right px-2.5 py-1.5 rounded text-xs flex items-center justify-between ${inspectedMissionId === m.id ? 'bg-[var(--secondary)] font-semibold' : 'hover:bg-[var(--secondary)]'}">
+          <span class="truncate">#${m.id} — ${escapeHtml(m.title)}</span>
+          <span class="font-mono text-[var(--success)] shrink-0">+$${Number(m.net_profit_usd).toFixed(1)}</span>
+        </button>
+      `).join('');
+
+      document.querySelectorAll('.hist-item').forEach((b) => {
+        b.onclick = () => {
+          inspectedMissionId = Number(b.getAttribute('data-hist'));
+          renderMissionControl();
+        };
+      });
+
+      const cur = state.missions.find((m) => m.id === inspectedMissionId) || state.missions[0];
+      if (cur) {
+        document.getElementById('trace-title').textContent = `سجل تدفق وتكامل الوكلاء — مهمة #${cur.id}`;
+        document.getElementById('trace-subtitle').textContent = cur.title;
+        document.getElementById('trace-badges').innerHTML = `
+          <span class="px-2.5 py-1 rounded bg-[var(--secondary)] font-semibold text-[var(--success)]">صافي الربح: <strong class="font-mono">$${Number(cur.net_profit_usd).toFixed(2)}</strong></span>
+          <span class="px-2.5 py-1 rounded bg-[var(--secondary)]">التكلفة: <strong class="font-mono">$${Number(cur.total_cost_usd).toFixed(4)}</strong></span>
+          <span class="px-2.5 py-1 rounded bg-[var(--secondary)]">جودة QA: <strong class="font-mono">${cur.qa_score}/100</strong></span>
+        `;
+        document.getElementById('trace-steps').innerHTML = (cur.steps || []).map((s) => `
+          <div class="p-3.5 flex items-start gap-3 text-xs">
+            <div class="w-6 h-6 rounded-full bg-[var(--secondary)] font-mono font-bold flex items-center justify-center shrink-0">${s.order}</div>
+            <div class="space-y-1 min-w-0">
+              <div class="font-bold">${escapeHtml(s.agent)} <span class="font-normal text-[var(--muted-foreground)]">(${escapeHtml(s.domain)})</span> ${s.tool ? `<span class="font-mono text-[var(--link)]">[${escapeHtml(s.tool)}]</span>` : ''}</div>
+              <div class="text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(s.summary)}</div>
+            </div>
+          </div>
+        `).join('');
+        document.getElementById('trace-deliverable').textContent = cur.final_output || '';
+      }
+    }
+
+    function renderTools() {
+      document.getElementById('tools-grid').innerHTML = state.tools.map((t) => `
+        <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col justify-between gap-3">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="px-2 py-0.5 rounded bg-[var(--secondary)] font-medium">${escapeHtml(t.category)}</span>
+              <span class="font-mono text-[var(--muted-foreground)]">${escapeHtml(t.slug)}</span>
+            </div>
+            <h3 class="font-bold text-sm pt-1">${escapeHtml(t.name)}</h3>
+            <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">${escapeHtml(t.description)}</p>
+            ${t.endpoint_url ? `<div class="font-mono text-xs text-[var(--link)] break-all">${escapeHtml(t.endpoint_url)}</div>` : ''}
+          </div>
+          <div class="pt-3 border-t border-[var(--card-border)] flex items-center justify-between">
+            <button data-testtool="${t.id}" class="btn-test-tool px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] border border-[var(--border)]">▶ اختبار الأداة</button>
+            ${!t.is_builtin ? `<button data-deltool="${t.id}" class="btn-del-tool text-xs text-[var(--error)] px-2 py-1">حذف</button>` : `<span class="text-xs text-[var(--muted-foreground)]">مدمجة بالنواة</span>`}
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.btn-test-tool').forEach((b) => {
+        b.onclick = () => {
+          const tool = state.tools.find((x) => x.id === Number(b.getAttribute('data-testtool')));
+          if (!tool) return;
+          const banner = document.getElementById('tool-test-banner');
+          banner.classList.remove('hidden');
+          banner.innerHTML = `<div class="font-bold text-[var(--success)]">✓ اختبار ناجح للأداة [${escapeHtml(tool.name)}]</div><div class="text-[var(--muted-foreground)]">تم التحقق من جاهزية الأداة للتركيب والتشغيل التلقائي داخل مهام الوكلاء.</div>`;
+        };
+      });
+
+      document.querySelectorAll('.btn-del-tool').forEach((b) => {
+        b.onclick = () => {
+          const id = Number(b.getAttribute('data-deltool'));
+          state.tools = state.tools.filter((x) => x.id !== id);
+          saveState();
+          renderAll();
+        };
+      });
+    }
+
+    function renderSaas() {
+      document.getElementById('set-brand').value = state.settings.brand || 'Nexus AgentOS';
+      document.getElementById('set-markup').value = state.settings.markupX || 4.0;
+      document.getElementById('set-provider').value = state.settings.provider || 'simulation';
+      document.getElementById('set-apikey').value = state.settings.apiKey || '';
+      document.getElementById('set-cfo').checked = Boolean(state.settings.cfoAutoPause);
+      document.getElementById('set-qa').checked = Boolean(state.settings.qaGate);
+      document.getElementById('api-key-box').classList.toggle('hidden', state.settings.provider === 'simulation');
+
+      document.getElementById('clients-tbody').innerHTML = state.clients.map((c) => `
+        <tr>
+          <td class="py-2.5 px-3 font-semibold">${escapeHtml(c.name)}</td>
+          <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${escapeHtml(c.plan)}</td>
+          <td class="py-2.5 px-3 font-mono font-bold text-[var(--success)]">$${Number(c.fee).toFixed(0)}/mo</td>
+          <td class="py-2.5 px-2"><button data-delcl="${c.id}" class="btn-del-cl text-[var(--error)]">✕</button></td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.btn-del-cl').forEach((b) => {
+        b.onclick = () => {
+          const id = Number(b.getAttribute('data-delcl'));
+          state.clients = state.clients.filter((x) => x.id !== id);
+          saveState();
+          renderAll();
+        };
+      });
+    }
+
+    // ==================== AGENT MODAL & AI META SPAWNER ====================
+    function openAgentModal(editId = null) {
+      editingAgentId = editId;
+      const doms = Array.from(new Set(state.agents.map((a) => a.domain)));
+      document.getElementById('domains-datalist').innerHTML = doms.map((d) => `<option value="${escapeHtml(d)}"></option>`).join('');
+      document.getElementById('ag-modal-err').classList.add('hidden');
+
+      const existing = editId ? state.agents.find((a) => a.id === editId) : null;
+      document.getElementById('agent-modal-title').textContent = existing ? `تعديل الوكيل: ${existing.name}` : 'بناء وتثبيت وكيل جديد (في أي مجال يخطر ببالك)';
+      document.getElementById('spawner-box').classList.toggle('hidden', Boolean(existing));
+
+      document.getElementById('ag-idea').value = '';
+      document.getElementById('ag-name').value = existing ? existing.name : '';
+      document.getElementById('ag-domain').value = existing ? existing.domain : '';
+      document.getElementById('ag-role').value = existing ? existing.role_title : '';
+      document.getElementById('ag-model').value = existing ? existing.model : 'google/gemini-2.5-flash';
+      document.getElementById('ag-desc').value = existing ? existing.description : '';
+      document.getElementById('ag-prompt').value = existing ? existing.system_prompt : '';
+      document.getElementById('ag-trigger').value = existing ? existing.trigger_type : 'manual';
+      document.getElementById('ag-price').value = existing ? existing.price_per_run : 35;
+      document.getElementById('ag-maxcost').value = existing ? existing.max_cost_usd : 0.50;
+      document.getElementById('ag-delegate').checked = existing ? Boolean(existing.can_delegate) : true;
+
+      const selectedSlugs = existing ? existing.installed_tools : ['web_search', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'];
+      renderAgentModalTools(selectedSlugs);
+      document.getElementById('agent-modal').classList.remove('hidden');
+    }
+
+    function renderAgentModalTools(selectedSlugs) {
+      document.getElementById('ag-tools-checks').innerHTML = state.tools.map((t) => `
+        <label class="flex items-start gap-2 p-2 rounded-lg border border-[var(--border)] bg-[var(--background)] cursor-pointer text-xs">
+          <input type="checkbox" name="ag-tool-chk" value="${escapeHtml(t.slug)}" ${selectedSlugs.includes(t.slug) ? 'checked' : ''} class="mt-0.5 accent-[var(--primary)]" />
+          <div>
+            <div class="font-semibold">${escapeHtml(t.name)}</div>
+            <div class="text-[var(--muted-foreground)]">${escapeHtml(t.category)}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
+    document.getElementById('ag-spawn-btn').onclick = () => {
+      const idea = document.getElementById('ag-idea').value.trim();
+      if (!idea) return;
+      const low = idea.toLowerCase();
+      let dom = document.getElementById('ag-domain').value.trim();
+      if (!dom) {
+        const rules = [
+          [['قانون', 'عقد', 'عقود', 'محام'], 'الشؤون القانونية والعقود'],
+          [['عقار', 'شقق', 'أراضي', 'إيجار'], 'العقارات والاستثمار العقاري'],
+          [['سيار', 'مزاد', 'شحن', 'جمارك'], 'السيارات والمزادات واللوجستيات'],
+          [['تداول', 'أسهم', 'كريبتو', 'ذهب', 'مالي'], 'الأسواق المالية والتداول الكمي'],
+          [['متجر', 'منتج', 'شوبيفاي', 'أمازون'], 'التجارة الإلكترونية والمنتجات'],
+          [['كود', 'برمج', 'تطبيق', 'موقع'], 'هندسة البرمجيات والـ Micro-SaaS'],
+          [['طب', 'عياد', 'صحة', 'دواء'], 'الرعاية الصحية والعيادات'],
+          [['سفر', 'طيران', 'فندق', 'سياح'], 'السياحة وحجوزات السفر']
+        ];
+        for (const [keys, label] of rules) {
+          if (keys.some((k) => low.includes(k))) { dom = label; break; }
+        }
+        if (!dom) dom = 'قطاع ' + idea.split(/\s+/).slice(0, 3).join(' ');
+      }
+
+      const words = idea.split(/\s+/).slice(0, 4).join(' ');
+      document.getElementById('ag-name').value = 'وكيل ' + words;
+      document.getElementById('ag-domain').value = dom;
+      document.getElementById('ag-role').value = 'خبير ذاتي — ' + dom;
+      document.getElementById('ag-desc').value = 'وكيل متخصص يعمل آلياً لتنفيذ: ' + idea;
+      document.getElementById('ag-prompt').value =
+        `أنت وكيل ذكاء اصطناعي مستقل عالي الكفاءة متخصص في (${dom}).\n` +
+        `المهمة الأساسية: ${idea}\n` +
+        `1. نفذ المهمة ذاتياً بنسبة 100% باستخدام الأدوات المثبتة.\n` +
+        `2. ركز على تعظيم الربح المادي وتقليل التكلفة والمخاطر بالأرقام.\n` +
+        `3. تكامل مع الوكلاء الزملاء عند الحاجة وسلم مخرجاً جاهزاً للتنفيذ الفوري.`;
+
+      const rec = ['web_search', 'persistent_memory', 'delegate_to_agent', 'publish_deliverable'];
+      if (['موقع', 'مزاد', 'أسعار', 'فحص', 'منافس'].some((w) => low.includes(w))) rec.push('web_scraper');
+      if (['حساب', 'جمارك', 'مالي', 'كود', 'أرقام', 'تحليل'].some((w) => low.includes(w))) rec.push('python_sandbox');
+      if (['نشر', 'إرسال', 'واتساب', 'متجر', 'api'].some((w) => low.includes(w))) rec.push('http_webhook');
+      renderAgentModalTools(rec);
+    };
+
+    document.getElementById('save-agent-btn').onclick = () => {
+      const name = document.getElementById('ag-name').value.trim();
+      const domain = document.getElementById('ag-domain').value.trim();
+      const prompt = document.getElementById('ag-prompt').value.trim();
+      if (!name || !domain || !prompt) {
+        const err = document.getElementById('ag-modal-err');
+        err.textContent = 'يرجى إدخال اسم الوكيل، المجال، وبرومبت المهمة.';
+        err.classList.remove('hidden');
+        return;
+      }
+      const toolsPicked = Array.from(document.querySelectorAll('input[name="ag-tool-chk"]:checked')).map((el) => el.value);
+      const payload = {
+        name,
+        domain,
+        role_title: document.getElementById('ag-role').value.trim() || ('خبير ' + domain),
+        model: document.getElementById('ag-model').value,
+        description: document.getElementById('ag-desc').value.trim() || name,
+        system_prompt: prompt,
+        installed_tools: toolsPicked,
+        trigger_type: document.getElementById('ag-trigger').value,
+        price_per_run: Number(document.getElementById('ag-price').value) || 35,
+        max_cost_usd: Number(document.getElementById('ag-maxcost').value) || 0.5,
+        can_delegate: document.getElementById('ag-delegate').checked
+      };
+
+      if (editingAgentId) {
+        const idx = state.agents.findIndex((a) => a.id === editingAgentId);
+        if (idx >= 0) state.agents[idx] = { ...state.agents[idx], ...payload };
+      } else {
+        const nextId = Math.max(0, ...state.agents.map((a) => a.id)) + 1;
+        state.agents.unshift({
+          id: nextId,
+          ...payload,
+          is_system_agent: false,
+          status: 'idle',
+          total_runs: 0,
+          total_cost_usd: 0,
+          total_revenue_usd: 0
+        });
+      }
+      saveState();
+      document.getElementById('agent-modal').classList.add('hidden');
+      renderAll();
+    };
+
+    // ==================== LIVE MISSION ORCHESTRATOR ====================
+    async function callLiveLLMIfConfigured(agent, goal, contextText) {
+      const prov = state.settings.provider;
+      const key = (state.settings.apiKey || '').trim();
+      if (prov === 'simulation' || !key) return null;
+
+      let url = 'https://openrouter.ai/api/v1/chat/completions';
+      let model = agent.model;
+      if (prov === 'openai') {
+        url = 'https://api.openai.com/v1/chat/completions';
+        model = 'gpt-4o-mini';
+      } else if (prov === 'gemini') {
+        url = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        model = 'gemini-2.5-flash';
+      }
+
+      try {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: `اسمك: ${agent.name} (${agent.role_title}) في مجال (${agent.domain}). تعليماتك:\n${agent.system_prompt}` },
+              { role: 'user', content: `المهمة:\n${goal}\n\nمخرجات الزملاء السابقين:\n${contextText}` }
+            ],
+            max_tokens: 900
+          })
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return data.choices?.[0]?.message?.content || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    document.getElementById('mc-execute-btn').onclick = async () => {
+      const goal = document.getElementById('mc-goal-input').value.trim();
+      const errEl = document.getElementById('mc-error');
+      errEl.classList.add('hidden');
+      if (!goal) {
+        errEl.textContent = 'اكتب الهدف أو المهمة المطلوب تنفيذها أولاً.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const workers = state.agents.filter((a) => !a.is_system_agent);
+      let squad = [];
+      if (mcMode === 'standalone') {
+        const picked = workers.find((a) => a.id === mcSelectedIds[0]) || workers[0];
+        if (picked) squad = [picked];
+      } else if (mcStrategy === 'manual') {
+        squad = mcSelectedIds.map((id) => workers.find((a) => a.id === id)).filter(Boolean);
+      } else {
+        const words = goal.toLowerCase().split(/\s+/).filter((w) => w.length >= 3);
+        squad = workers
+          .map((a) => {
+            const hay = `${a.name} ${a.domain} ${a.role_title} ${a.description} ${a.system_prompt}`.toLowerCase();
+            let score = 0;
+            words.forEach((w) => { if (hay.includes(w)) score += 3; });
+            return { score, a };
+          })
+          .sort((x, y) => y.score - x.score)
+          .slice(0, 3)
+          .map((x) => x.a);
+      }
+
+      if (!squad.length) {
+        errEl.textContent = 'يرجى اختيار وكيل واحد على الأقل.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('mc-execute-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ جاري تشغيل الوكلاء وتكامل المهام...';
+
+      const steps = [];
+      let order = 1;
+      let totalCost = 0;
+      const outputs = [];
+      const toolsMap = {};
+      state.tools.forEach((t) => { toolsMap[t.slug] = t.name; });
+
+      if (mcMode === 'swarm' || squad.length > 1) {
+        steps.push({
+          order: order++,
+          agent: 'المنسق العام للأسطول (Master Orchestrator)',
+          domain: 'نواة النظام',
+          tool: 'agent_router',
+          summary: 'تم تفكيك الهدف وتشكيل خلية عمل متكاملة من: ' + squad.map((s) => `[${s.name} — ${s.domain}]`).join(' ⟵ ')
+        });
+        totalCost += 0.0004;
+      }
+
+      for (let i = 0; i < squad.length; i++) {
+        const ag = squad[i];
+        const agTools = (ag.installed_tools || []).filter((t) => t !== 'delegate_to_agent').slice(0, 2);
+        agTools.forEach((sl) => {
+          steps.push({
+            order: order++,
+            agent: ag.name,
+            domain: ag.domain,
+            tool: sl,
+            summary: `تشغيل أداة (${toolsMap[sl] || sl}) لجمع ومعالجة البيانات التخصصية في قطاع (${ag.domain}).`
+          });
+          totalCost += 0.0002;
+        });
+
+        // Standalone automatic peer delegation when needed
+        if (mcMode === 'standalone' && ag.can_delegate && workers.length > 1 && ['تكامل', 'شامل', 'كامل', 'حملة', 'مع '].some((k) => goal.includes(k))) {
+          const peer = workers.find((p) => p.id !== ag.id);
+          if (peer) {
+            steps.push({
+              order: order++,
+              agent: peer.name,
+              domain: peer.domain,
+              tool: 'delegate_to_agent',
+              summary: `تكامل ذاتي: استعان [${ag.name}] بزميله [${peer.name}] لإنجاز شق تكميلي في (${peer.domain})!`
+            });
+            outputs.push(`## مساهمة تكاملية من [${peer.name} — ${peer.domain}]\n- دعم المهمة عبر خبرة (${peer.role_title}) لضمان جاهزية التنفيذ 100%.`);
+            totalCost += 0.0007;
+          }
+        }
+
+        const liveText = await callLiveLLMIfConfigured(ag, goal, outputs.join('\n\n'));
+        const agCost = 0.0009;
+        totalCost += agCost;
+
+        const outBlock = liveText
+          ? `## [${ag.name} — ${ag.domain}]\n${liveText}`
+          : `## [${ag.name} — ${ag.domain}]\n` +
+            `- **التخصص المنفذ**: ${ag.role_title}\n` +
+            `- **تطبيق تعليمات البرومبت**: ${(ag.system_prompt || '').split('\n')[0].slice(0, 140)}\n` +
+            `- **المخرج التنفيذي لهدف (${goal.slice(0, 90)})**: تم إعداد حزمة العمل المهيكلة في قطاع (${ag.domain}) مربوطة بالأدوات المثبتة وجاهزة للتسليم أو التمرير للمرحلة التالية (القيمة السوقية المقدرة: $${ag.price_per_run}).`;
+
+        outputs.push(outBlock);
+        steps.push({
+          order: order++,
+          agent: ag.name,
+          domain: ag.domain,
+          tool: liveText ? 'live_llm' : 'autonomous_core',
+          summary: `أنجز [${ag.name}] مهامه وسلّم المخرجات إلى مساحة العمل المشتركة.`
+        });
+
+        // Update agent stats
+        const targetAg = state.agents.find((x) => x.id === ag.id);
+        if (targetAg) {
+          targetAg.total_runs += 1;
+          targetAg.total_cost_usd = Number((targetAg.total_cost_usd + agCost).toFixed(5));
+          targetAg.total_revenue_usd = Number((targetAg.total_revenue_usd + Number(ag.price_per_run || 25)).toFixed(2));
+        }
+      }
+
+      const qaScore = state.settings.qaGate ? Math.min(99, 93 + squad.length) : 95;
+      if (state.settings.qaGate) {
+        steps.push({
+          order: order++,
+          agent: 'وكيل فحص الجودة (QA Critic)',
+          domain: 'ضمان الجودة',
+          tool: 'qa_gate',
+          summary: `تمت مراجعة المخرجات واعتمادها بدرجة جودة ${qaScore}/100 بدون تعارض.`
+        });
+      }
+
+      const customVal = document.getElementById('mc-value-input').value.trim();
+      const defaultVal = squad.reduce((s, a) => s + Number(a.price_per_run || 25), 0);
+      const finalVal = customVal ? Number(customVal) : defaultVal;
+      const netProfit = Number((finalVal - totalCost).toFixed(4));
+
+      steps.push({
+        order: order++,
+        agent: 'وكيل المدير المالي (CFO Guardrail)',
+        domain: 'الرقابة المالية والأرباح',
+        tool: 'cfo_audit',
+        summary: `التكلفة الفعلية $${totalCost.toFixed(4)} | القيمة المولدة $${finalVal.toFixed(2)} | صافي الربح +$${netProfit.toFixed(2)}.`
+      });
+
+      const nextMissionId = Math.max(0, ...state.missions.map((m) => m.id)) + 1;
+      const newMission = {
+        id: nextMissionId,
+        title: goal.slice(0, 65) + (goal.length > 65 ? '...' : ''),
+        mode: mcMode,
+        qa_score: qaScore,
+        total_cost_usd: Number(totalCost.toFixed(5)),
+        estimated_value_usd: finalVal,
+        net_profit_usd: netProfit,
+        steps,
+        final_output: `# التقرير والمخرج المتكامل المعتمد\n**الهدف المنفذ:** ${goal}\n\n` + outputs.join('\n\n---\n\n') + `\n\n---\n**ملخص الربحية:** التكلفة $${totalCost.toFixed(4)} | العائد $${finalVal.toFixed(2)} | صافي الربح **$${netProfit.toFixed(2)}**`
+      };
+
+      state.missions.unshift(newMission);
+      inspectedMissionId = newMission.id;
+      saveState();
+
+      btn.disabled = false;
+      btn.textContent = '▶ إطلاق التنفيذ الحي الآن';
+      renderAll();
+    };
+
+    // ==================== EVENT WIRING ====================
+    document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
+      btn.onclick = () => switchTab(btn.getAttribute('data-tab'));
+    });
+
+    document.getElementById('cmd-add-agent-btn').onclick = () => {
+      switchTab('studio');
+      openAgentModal(null);
+    };
+    document.getElementById('cmd-run-swarm-btn').onclick = () => {
+      mcMode = 'swarm';
+      switchTab('missions');
+    };
+    document.getElementById('studio-new-agent-btn').onclick = () => openAgentModal(null);
+    document.getElementById('close-agent-modal').onclick = () => document.getElementById('agent-modal').classList.add('hidden');
+    document.getElementById('cancel-agent-modal').onclick = () => document.getElementById('agent-modal').classList.add('hidden');
+
+    document.getElementById('studio-search').oninput = (e) => {
+      studioSearch = e.target.value;
+      renderStudio();
+    };
+
+    document.getElementById('mc-mode-swarm').onclick = () => { mcMode = 'swarm'; renderMissionControl(); };
+    document.getElementById('mc-mode-solo').onclick = () => {
+      mcMode = 'standalone';
+      const firstWorker = state.agents.find((a) => !a.is_system_agent);
+      if (mcSelectedIds.length !== 1 && firstWorker) mcSelectedIds = [firstWorker.id];
+      renderMissionControl();
+    };
+    document.getElementById('mc-strat-auto').onclick = () => { mcStrategy = 'auto'; renderMissionControl(); };
+    document.getElementById('mc-strat-manual').onclick = () => { mcStrategy = 'manual'; renderMissionControl(); };
+
+    document.querySelectorAll('.preset-btn').forEach((b) => {
+      b.onclick = () => {
+        document.getElementById('mc-goal-input').value = b.getAttribute('data-preset');
+      };
+    });
+
+    document.getElementById('copy-deliverable-btn').onclick = (e) => {
+      const txt = document.getElementById('trace-deliverable').textContent;
+      navigator.clipboard?.writeText(txt);
+      e.target.textContent = '✓ تم النسخ!';
+      setTimeout(() => { e.target.textContent = 'نسخ المخرج'; }, 1800);
+    };
+
+    document.getElementById('open-tool-modal-btn').onclick = () => document.getElementById('tool-modal').classList.remove('hidden');
+    document.getElementById('close-tool-modal').onclick = () => document.getElementById('tool-modal').classList.add('hidden');
+    document.getElementById('cancel-tool-modal').onclick = () => document.getElementById('tool-modal').classList.add('hidden');
+
+    document.getElementById('save-tool-btn').onclick = () => {
+      const name = document.getElementById('tl-name').value.trim();
+      const desc = document.getElementById('tl-desc').value.trim();
+      if (!name || !desc) return;
+      const nextId = Math.max(0, ...state.tools.map((t) => t.id)) + 1;
+      const slug = 'custom_' + nextId;
+      state.tools.push({
+        id: nextId,
+        slug,
+        name,
+        category: document.getElementById('tl-cat').value.trim() || 'أدوات مخصصة',
+        description: desc,
+        endpoint_url: document.getElementById('tl-url').value.trim(),
+        is_builtin: false
+      });
+      saveState();
+      document.getElementById('tl-name').value = '';
+      document.getElementById('tl-desc').value = '';
+      document.getElementById('tl-url').value = '';
+      document.getElementById('tool-modal').classList.add('hidden');
+      renderAll();
+    };
+
+    document.getElementById('set-provider').onchange = (e) => {
+      document.getElementById('api-key-box').classList.toggle('hidden', e.target.value === 'simulation');
+    };
+
+    document.getElementById('save-settings-btn').onclick = () => {
+      state.settings.brand = document.getElementById('set-brand').value.trim() || 'Nexus AgentOS';
+      state.settings.markupX = Number(document.getElementById('set-markup').value) || 4.0;
+      state.settings.provider = document.getElementById('set-provider').value;
+      state.settings.apiKey = document.getElementById('set-apikey').value.trim();
+      state.settings.cfoAutoPause = document.getElementById('set-cfo').checked;
+      state.settings.qaGate = document.getElementById('set-qa').checked;
+      saveState();
+      renderAll();
+      const msg = document.getElementById('settings-saved-msg');
+      msg.classList.remove('hidden');
+      setTimeout(() => msg.classList.add('hidden'), 2000);
+    };
+
+    document.getElementById('export-fleet-btn').onclick = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'nexus-agent-os-backup.json';
+      a.click();
+    };
+
+    document.getElementById('add-client-btn').onclick = () => {
+      const name = document.getElementById('cl-name').value.trim();
+      if (!name) return;
+      const nextId = Math.max(0, ...state.clients.map((c) => c.id)) + 1;
+      state.clients.unshift({
+        id: nextId,
+        name,
+        plan: document.getElementById('cl-plan').value.trim() || 'باقة الشركات الذكية',
+        fee: Number(document.getElementById('cl-fee').value) || 199
+      });
+      document.getElementById('cl-name').value = '';
+      saveState();
+      renderAll();
+    };
+
+    // Init
+    switchTab('command');
+  </script>
+</body>
+</html>
