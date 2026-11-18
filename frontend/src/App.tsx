@@ -1,135 +1,199 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Activity,
-  AlertTriangle,
+  BookOpen,
   Bot,
   Coins,
+  Command,
   Cpu,
   CreditCard,
-  GitMerge,
-  KeyRound,
+  GitBranch,
   LayoutDashboard,
   LogOut,
-  Plus,
-  RefreshCw,
+  Menu,
+  MessageSquare,
+  Moon,
+  Radio,
+  Search,
   Shield,
+  Sun,
+  Target,
   Wrench,
+  X,
 } from 'lucide-react';
-import { enterpriseApi, getStoredToken, setStoredToken } from './api';
-import { AuthGate } from './components/AuthGate';
-import { BillingAndPlansView } from './components/BillingAndPlansView';
-import { EnterpriseAgentStudio } from './components/EnterpriseAgentStudio';
-import { EnterpriseMissionRoom } from './components/EnterpriseMissionRoom';
-import { SuperAdminPanel } from './components/SuperAdminPanel';
-import { ToolsAndApiPortal } from './components/ToolsAndApiPortal';
+import { AgentMarketplaceStudio } from './components/AgentMarketplaceStudio';
+import { AuthGateView } from './components/AuthGateView';
+import { AutomationsAndChannelsView } from './components/AutomationsAndChannelsView';
+import { BillingAndWalletPanel } from './components/BillingAndWalletPanel';
+import { ExecutiveOverview } from './components/ExecutiveOverview';
+import { InteractiveChatStudio } from './components/InteractiveChatStudio';
+import { KnowledgeAndMemoryHub } from './components/KnowledgeAndMemoryHub';
+import { MissionControlPanel } from './components/MissionControlPanel';
+import { SuperAdminConsole } from './components/SuperAdminConsole';
+import { ToolsAndDeveloperHub } from './components/ToolsAndDeveloperHub';
+import { VisualWorkflowStudio } from './components/VisualWorkflowStudio';
+import { DEFAULT_PLANS_CATALOG } from './data/enterpriseCatalog';
+import { nexusEngine } from './engine/nexusEngine';
 import type {
+  AgentMemoryRecord,
   AgentRecord,
+  AutomationRecord,
+  ConnectorRecord,
   DeveloperKeyRecord,
+  InvoiceRecord,
+  KnowledgeDoc,
   MissionRecord,
-  PublicPlatformInfo,
+  NavTabId,
+  SubscriptionPlan,
+  ThemeMode,
   ToolRecord,
   UserProfile,
+  WalletTx,
+  WorkflowRecord,
 } from './types';
 
-type TabId = 'dashboard' | 'agents' | 'missions' | 'tools' | 'billing' | 'admin';
+interface ToastItem {
+  id: number;
+  text: string;
+  isError?: boolean;
+}
 
 export const App: React.FC = () => {
   const [booting, setBooting] = useState(true);
-  const [publicInfo, setPublicInfo] = useState<PublicPlatformInfo | null>(null);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
-
-  // Workspace state
-  const [llmReady, setLlmReady] = useState(false);
-  const [stats, setStats] = useState({
-    private_agents_count: 0,
-    marketplace_agents_count: 0,
-    custom_domains_count: 0,
-    missions_count: 0,
-    total_tokens_processed: 0,
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('nexus_theme_v3');
+    return saved === 'light' ? 'light' : 'dark';
   });
-  const [domains, setDomains] = useState<string[]>([]);
-  const [myAgents, setMyAgents] = useState<AgentRecord[]>([]);
-  const [marketplaceAgents, setMarketplaceAgents] = useState<AgentRecord[]>([]);
-  const [tools, setTools] = useState<ToolRecord[]>([]);
+
+  const [platformName, setPlatformName] = useState('Nexus AgentOS Enterprise');
+  const [paymentInstructions, setPaymentInstructions] = useState('');
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(DEFAULT_PLANS_CATALOG);
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  const [activeTab, setActiveTab] = useState<NavTabId>('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
+  const [chatSeedPrompt, setChatSeedPrompt] = useState('');
+
+  // Workspace Data
+  const [agents, setAgents] = useState<AgentRecord[]>([]);
+  const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
+  const [memories, setMemories] = useState<AgentMemoryRecord[]>([]);
+  const [workflows, setWorkflows] = useState<WorkflowRecord[]>([]);
   const [missions, setMissions] = useState<MissionRecord[]>([]);
+  const [automations, setAutomations] = useState<AutomationRecord[]>([]);
+  const [connectors, setConnectors] = useState<ConnectorRecord[]>([]);
+  const [tools, setTools] = useState<ToolRecord[]>([]);
   const [devKeys, setDevKeys] = useState<DeveloperKeyRecord[]>([]);
+  const [txs, setTxs] = useState<WalletTx[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
 
-  // Pre-filled mission params when clicking "Run" from an agent card
-  const [presetMode, setPresetMode] = useState<'standalone' | 'swarm_sequential' | 'swarm_orchestrated'>('standalone');
-  const [presetAgentIds, setPresetAgentIds] = useState<number[]>([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const loadPublic = useCallback(async () => {
-    try {
-      const info = await enterpriseApi.getPublicInfo();
-      setPublicInfo(info);
-    } catch {
-      // Backend might be initializing
-    }
+  const notify = useCallback((text: string, isError = false) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, text, isError }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
   }, []);
 
-  const loadWorkspace = useCallback(async () => {
-    try {
-      const [dash, agentLists, toolList, missionList] = await Promise.all([
-        enterpriseApi.getDashboard(),
-        enterpriseApi.listAgents(),
-        enterpriseApi.listTools(),
-        enterpriseApi.listMissions(),
-      ]);
-      setUser(dash.user);
-      setLlmReady(dash.llm_ready);
-      setStats(dash.stats);
-      setDomains(dash.domains);
-      setMyAgents(agentLists.my_agents);
-      setMarketplaceAgents(agentLists.marketplace_agents);
-      setTools(toolList);
-      setMissions(missionList);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('nexus_theme_v3', theme);
+  }, [theme]);
 
-      if (dash.user.role === 'super_admin' || dash.user.subscription?.allow_api_access) {
-        try {
-          const keys = await enterpriseApi.listDeveloperKeys();
-          setDevKeys(keys);
-        } catch {
-          setDevKeys([]);
-        }
-      } else {
-        setDevKeys([]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
       }
-    } catch {
-      setStoredToken(null);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const refreshWorkspace = useCallback(async () => {
+    const restored = await nexusEngine.restoreSession();
+    if (!restored) {
       setUser(null);
+      return;
     }
+    setUser(restored);
+    const [
+      agList,
+      docList,
+      memList,
+      wfList,
+      mList,
+      auList,
+      connList,
+      tList,
+      kList,
+      txList,
+      invList,
+    ] = await Promise.all([
+      nexusEngine.listAgents(),
+      nexusEngine.listKnowledgeDocs(),
+      nexusEngine.listMemories(),
+      nexusEngine.listWorkflows(),
+      nexusEngine.listMissions(),
+      nexusEngine.listAutomations(),
+      nexusEngine.listConnectors(),
+      nexusEngine.listTools(),
+      nexusEngine.listDeveloperKeys().catch(() => []),
+      nexusEngine.listWalletTxs(),
+      nexusEngine.listMyInvoices(),
+    ]);
+    setAgents(agList);
+    setDocs(docList);
+    setMemories(memList);
+    setWorkflows(wfList);
+    setMissions(mList);
+    setAutomations(auList);
+    setConnectors(connList);
+    setTools(tList);
+    setDevKeys(kList);
+    setTxs(txList);
+    setInvoices(invList);
   }, []);
 
   useEffect(() => {
     (async () => {
-      await loadPublic();
-      const tok = getStoredToken();
-      if (tok) {
-        await loadWorkspace();
+      try {
+        const pub = await nexusEngine.getPublicInfo();
+        setPlatformName(pub.platform_name);
+        setPaymentInstructions(pub.manual_payment_instructions);
+        if (pub.plans && pub.plans.length > 0) setPlans(pub.plans);
+        await refreshWorkspace();
+      } finally {
+        setBooting(false);
       }
-      setBooting(false);
     })();
-  }, [loadPublic, loadWorkspace]);
+  }, [refreshWorkspace]);
 
-  function handleLogout() {
-    setStoredToken(null);
-    setUser(null);
-    setActiveTab('dashboard');
+  function toggleTheme() {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }
 
-  function handleRunAgentFromStudio(agent: AgentRecord, mode: 'standalone' | 'swarm_sequential') {
-    setPresetMode(mode);
-    setPresetAgentIds([agent.id]);
-    setActiveTab('missions');
+  function navigateTo(tab: NavTabId) {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+    setCmdOpen(false);
+  }
+
+  function launchPromptInChat(prompt: string) {
+    setChatSeedPrompt(prompt);
+    navigateTo('chat');
   }
 
   if (booting) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-          <Cpu size={32} style={{ color: 'var(--emerald)', marginBottom: 10 }} />
-          <div>جارٍ تهيئة نواة Nexus AgentOS Enterprise...</div>
+          <Cpu size={32} style={{ color: 'var(--brand)', marginBottom: 10 }} />
+          <div style={{ fontWeight: 600 }}>جارٍ تحميل نظام التشغيل Nexus AgentOS v3.0...</div>
         </div>
       </div>
     );
@@ -137,421 +201,369 @@ export const App: React.FC = () => {
 
   if (!user) {
     return (
-      <AuthGate
-        publicInfo={publicInfo}
-        onAuthenticated={async (authedUser) => {
-          setUser(authedUser);
-          await loadWorkspace();
-        }}
-      />
+      <>
+        <AuthGateView
+          platformName={platformName}
+          plans={plans}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onAuthenticated={async (authed) => {
+            setUser(authed);
+            await refreshWorkspace();
+          }}
+        />
+        <div className="nx-toast-stack">
+          {toasts.map((t) => (
+            <div key={t.id} className={`nx-toast ${t.isError ? 'error' : ''}`}>
+              <span>{t.text}</span>
+            </div>
+          ))}
+        </div>
+      </>
     );
   }
 
-  const sub = user.subscription;
-  const maxAgentsLabel =
-    user.role === 'super_admin' || (sub && sub.max_agents < 0)
-      ? 'غير محدود'
-      : String(sub?.max_agents ?? 2);
+  const navItems: Array<{
+    group: string;
+    items: Array<{ id: NavTabId; label: string; icon: React.ReactNode; count?: number; adminOnly?: boolean }>;
+  }> = [
+    {
+      group: 'القيادة والاستوديو',
+      items: [
+        { id: 'overview', label: 'لوحة القيادة التنفيذية', icon: <LayoutDashboard size={16} /> },
+        { id: 'chat', label: 'المحادثة ولوحة المخرجات', icon: <MessageSquare size={16} /> },
+        { id: 'workflows', label: 'مصمم المسارات المرئي', icon: <GitBranch size={16} />, count: workflows.length },
+      ],
+    },
+    {
+      group: 'القوى الذكية والمعرفة',
+      items: [
+        { id: 'agents', label: 'مصنع ومتجر الوكلاء', icon: <Bot size={16} />, count: agents.length },
+        { id: 'knowledge', label: 'قاعدة المعرفة والذاكرة', icon: <BookOpen size={16} />, count: docs.length },
+        { id: 'missions', label: 'غرفة العمليات والسرب', icon: <Target size={16} />, count: missions.length },
+      ],
+    },
+    {
+      group: 'الأتمتة والتكامل',
+      items: [
+        { id: 'automations', label: 'الجدولة وقنوات الربط', icon: <Radio size={16} />, count: automations.length + connectors.length },
+        { id: 'tools', label: 'الأدوات وبوابة المطورين', icon: <Wrench size={16} />, count: tools.length },
+      ],
+    },
+    {
+      group: 'الحساب والحوكمة',
+      items: [
+        { id: 'billing', label: 'الباقات والمحفظة والفواتير', icon: <CreditCard size={16} /> },
+        { id: 'admin', label: 'لوحة المالك (Super Admin)', icon: <Shield size={16} />, adminOnly: true },
+      ],
+    },
+  ];
+
+  const flatCommands = navItems
+    .flatMap((g) => g.items)
+    .filter((i) => !i.adminOnly || user.role === 'super_admin')
+    .filter((i) => !cmdQuery.trim() || i.label.toLowerCase().includes(cmdQuery.trim().toLowerCase()));
 
   return (
-    <div className="os-shell" dir="rtl">
+    <div className="nexus-shell" dir="rtl">
       {/* Sidebar */}
-      <aside className="os-sidebar">
+      <aside className={`nexus-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div>
-          <div className="brand-block">
-            <div className="brand-mark">
-              <Cpu size={20} />
+          <div className="brand-row">
+            <div className="brand-logo">
+              <Cpu size={18} />
             </div>
-            <div>
-              <div className="brand-title">{publicInfo?.platform_name || 'Nexus AgentOS'}</div>
-              <div className="brand-sub">Multi-Tenant AI SaaS Core</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="brand-name">{platformName}</div>
+              <div className="brand-edition">Enterprise OS v3.0</div>
             </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="btn btn-ghost btn-sm mobile-only"
+            >
+              <X size={16} />
+            </button>
           </div>
 
-          {/* Account & Wallet Box */}
-          <div className="wallet-box">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontWeight: 700, fontSize: '0.86rem' }}>{user.full_name || user.email}</span>
-              <span className={`tag ${user.role === 'super_admin' ? 'tag-amber' : 'tag-emerald'}`}>
-                {user.role === 'super_admin' ? 'Super Admin' : sub?.plan_name || 'مشترك'}
-              </span>
-            </div>
-            <div className="mono" style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginBottom: 10 }}>
-              {user.email}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingTop: 8,
-                borderTop: '1px solid var(--border-subtle)',
-              }}
-            >
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Coins size={14} style={{ color: 'var(--emerald)' }} /> الرصيد المتاح
-              </span>
-              <span className="mono" style={{ fontWeight: 700, color: 'var(--emerald)', fontSize: '0.95rem' }}>
-                {user.credits_balance.toLocaleString()} cr
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="nav-list">
-            <button
-              type="button"
-              className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              <span className="nav-btn-inner">
-                <LayoutDashboard size={17} className="nav-icon" />
-                مساحة العمل
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className={`nav-btn ${activeTab === 'agents' ? 'active' : ''}`}
-              onClick={() => setActiveTab('agents')}
-            >
-              <span className="nav-btn-inner">
-                <Bot size={17} className="nav-icon" />
-                مصنع ومتجر الوكلاء
-              </span>
-              <span className="tag mono">{myAgents.length}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`nav-btn ${activeTab === 'missions' ? 'active' : ''}`}
-              onClick={() => setActiveTab('missions')}
-            >
-              <span className="nav-btn-inner">
-                <GitMerge size={17} className="nav-icon" />
-                غرفة العمليات (ReAct)
-              </span>
-              <span className="tag mono">{missions.length}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`nav-btn ${activeTab === 'tools' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tools')}
-            >
-              <span className="nav-btn-inner">
-                <Wrench size={17} className="nav-icon" />
-                الأدوات وبوابة API
-              </span>
-              <span className="tag mono">{tools.length}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`nav-btn ${activeTab === 'billing' ? 'active' : ''}`}
-              onClick={() => setActiveTab('billing')}
-            >
-              <span className="nav-btn-inner">
-                <CreditCard size={17} className="nav-icon" />
-                الاشتراك والمحفظة
-              </span>
-            </button>
-
-            {user.role === 'super_admin' && (
-              <button
-                type="button"
-                className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
-                onClick={() => setActiveTab('admin')}
-                style={{ marginTop: 6, border: '1px solid hsla(38, 88%, 56%, 0.25)' }}
-              >
-                <span className="nav-btn-inner">
-                  <Shield size={17} style={{ color: 'var(--amber)' }} />
-                  لوحة المالك (Admin)
-                </span>
-              </button>
-            )}
-          </nav>
+          {navItems.map((grp) => {
+            const visible = grp.items.filter((i) => !i.adminOnly || user.role === 'super_admin');
+            if (visible.length === 0) return null;
+            return (
+              <div key={grp.group}>
+                <div className="nav-group-label">{grp.group}</div>
+                {visible.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigateTo(item.id)}
+                    className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                  >
+                    <span className="nav-item-start">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </span>
+                    {typeof item.count === 'number' && <span className="nav-count">{item.count}</span>}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="sidebar-footer">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>محرك النماذج:</span>
-            <span className={`tag ${llmReady ? 'tag-emerald' : 'tag-amber'}`}>
-              {llmReady ? 'جاهز ومتصل' : 'بانتظار مفتاح API'}
-            </span>
+        {/* Account Footer */}
+        <div
+          style={{
+            marginTop: 18,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <strong style={{ fontSize: '0.81rem' }}>{user.full_name}</strong>
+              <span className={`nx-badge ${user.role === 'super_admin' ? 'nx-badge-amber' : 'nx-badge-brand'}`}>
+                {user.role === 'super_admin' ? 'Owner' : 'Pro'}
+              </span>
+            </div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              {user.email}
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ flex: 1, padding: '7px 10px', fontSize: '0.8rem' }}
-              onClick={() => loadWorkspace()}
-            >
-              <RefreshCw size={14} /> تحديث
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              style={{ flex: 1, padding: '7px 10px', fontSize: '0.8rem' }}
-              onClick={handleLogout}
-            >
-              <LogOut size={14} /> خروج
-            </button>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              nexusEngine.logout();
+              setUser(null);
+              setActiveTab('overview');
+            }}
+            className="btn btn-sm"
+            style={{ width: '100%' }}
+          >
+            <LogOut size={14} />
+            <span>تسجيل الخروج</span>
+          </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="os-main">
-        {activeTab === 'dashboard' && (
-          <div>
-            <div className="page-header">
-              <div>
-                <h1>مرحباً، {user.full_name || 'المشترك'} {user.company_name ? `— ${user.company_name}` : ''}</h1>
-                <p>
-                  مساحة عمل معزولة بالكامل (Multi-Tenant Isolation) لبناء وتشغيل الوكلاء المستقلين وفرق السرب بأدوات فعلية وحساب استهلاك دقيق.
-                </p>
-              </div>
-              <div className="header-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('agents')}>
-                  <Plus size={16} /> بناء وكيل جديد
-                </button>
-                <button type="button" className="btn btn-primary" onClick={() => setActiveTab('missions')}>
-                  <Activity size={16} /> إطلاق مهمة الآن
-                </button>
-              </div>
+      {/* Main Content Area */}
+      <div className="nexus-main-wrap">
+        <header className="nexus-topbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="btn btn-sm mobile-only"
+            >
+              <Menu size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCmdOpen(true)}
+              className="btn btn-sm"
+              style={{ minWidth: 230, justifyContent: 'space-between', color: 'var(--text-muted)' }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                <Search size={14} />
+                <span>بحث وانتقال سريع بين الأنظمة...</span>
+              </span>
+              <span className="mono" style={{ fontSize: '0.68rem', opacity: 0.75 }}>
+                Ctrl+K
+              </span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => navigateTo('billing')}
+              className="btn btn-sm"
+              title="رصيد المحفظة"
+            >
+              <Coins size={14} style={{ color: 'var(--brand)' }} />
+              <span className="mono">{user.credits_balance.toLocaleString()} cr</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn btn-sm"
+              title="تبديل الوضع الليلي / النهاري"
+            >
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+              <span>{theme === 'dark' ? 'نهاري' : 'ليلي'}</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="nexus-content">
+          {activeTab === 'overview' && (
+            <ExecutiveOverview
+              user={user}
+              agents={agents}
+              missions={missions}
+              docs={docs}
+              workflows={workflows}
+              automations={automations}
+              hasLiveKey={nexusEngine.hasLiveApiKey(user)}
+              engineMode={nexusEngine.getEngineMode()}
+              onNavigate={navigateTo}
+              onQuickPlaybook={launchPromptInChat}
+            />
+          )}
+
+          {activeTab === 'chat' && (
+            <InteractiveChatStudio
+              agents={agents}
+              initialPrompt={chatSeedPrompt}
+              onClearInitialPrompt={() => setChatSeedPrompt('')}
+              onWorkspaceRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'workflows' && (
+            <VisualWorkflowStudio
+              agents={agents}
+              workflows={workflows}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'agents' && (
+            <AgentMarketplaceStudio
+              user={user}
+              agents={agents}
+              onRefresh={refreshWorkspace}
+              onLaunchAgentPrompt={launchPromptInChat}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'knowledge' && (
+            <KnowledgeAndMemoryHub
+              docs={docs}
+              memories={memories}
+              agents={agents}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'missions' && (
+            <MissionControlPanel
+              agents={agents}
+              missions={missions}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'automations' && (
+            <AutomationsAndChannelsView
+              agents={agents}
+              automations={automations}
+              connectors={connectors}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'tools' && (
+            <ToolsAndDeveloperHub
+              user={user}
+              tools={tools}
+              devKeys={devKeys}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'billing' && (
+            <BillingAndWalletPanel
+              user={user}
+              plans={plans}
+              paymentInstructions={paymentInstructions}
+              txs={txs}
+              invoices={invoices}
+              onRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'admin' && user.role === 'super_admin' && (
+            <SuperAdminConsole
+              plans={plans}
+              onGlobalRefresh={refreshWorkspace}
+              notify={notify}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Command Palette Modal (Ctrl+K) */}
+      {cmdOpen && (
+        <div className="nx-modal-backdrop" onClick={() => setCmdOpen(false)}>
+          <div className="nx-modal" style={{ maxWidth: 520, padding: 14 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+              <Command size={16} style={{ color: 'var(--brand)' }} />
+              <input
+                autoFocus
+                className="nx-input"
+                style={{ border: 'none', boxShadow: 'none', background: 'transparent', padding: '4px 0' }}
+                value={cmdQuery}
+                onChange={(e) => setCmdQuery(e.target.value)}
+                placeholder="اكتب اسم القسم أو الوكيل للانتقال الفوري..."
+              />
             </div>
 
-            {!llmReady && (
-              <div
-                className="panel"
-                style={{
-                  marginBottom: 22,
-                  borderColor: 'hsla(38, 88%, 56%, 0.45)',
-                  background: 'hsla(38, 88%, 56%, 0.07)',
-                }}
-              >
-                <div
-                  className="panel-body"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto' }}>
+              {flatCommands.map((cmd) => (
+                <button
+                  key={cmd.id}
+                  type="button"
+                  onClick={() => navigateTo(cmd.id)}
+                  className="nav-item"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <AlertTriangle size={22} style={{ color: 'var(--amber)', flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontWeight: 700, marginBottom: 2 }}>مطلوب ربط مفتاح نماذج الذكاء الاصطناعي للتشغيل الفعلي</div>
-                      <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                        المنصة لا تستخدم أي ردود وهمية أو محاكاة. اربط مفتاح Gemini أو OpenRouter أو OpenAI للبدء الفوري.
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-amber"
-                    onClick={() => setActiveTab(user.role === 'super_admin' ? 'admin' : 'tools')}
-                  >
-                    <KeyRound size={15} /> إعداد مفتاح المزود الآن
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="kpi-strip">
-              <div className="kpi-tile">
-                <div className="kpi-label">
-                  <span>رصيد المحفظة الحالي</span>
-                  <Coins size={15} style={{ color: 'var(--emerald)' }} />
-                </div>
-                <div className="kpi-value profit">{user.credits_balance.toLocaleString()}</div>
-                <div className="kpi-sub">إجمالي المستهلك: {user.total_spent_credits.toLocaleString()} نقطة</div>
-              </div>
-
-              <div className="kpi-tile">
-                <div className="kpi-label">
-                  <span>الوكلاء في مساحتك</span>
-                  <Bot size={15} />
-                </div>
-                <div className="kpi-value">
-                  {stats.private_agents_count} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>/ {maxAgentsLabel}</span>
-                </div>
-                <div className="kpi-sub">متاح في المتجر العام: {stats.marketplace_agents_count} قوالب</div>
-              </div>
-
-              <div className="kpi-tile">
-                <div className="kpi-label">
-                  <span>المهام المنفذة (ReAct & Swarm)</span>
-                  <GitMerge size={15} />
-                </div>
-                <div className="kpi-value">{stats.missions_count}</div>
-                <div className="kpi-sub">عبر {stats.custom_domains_count} مجالات تخصصية</div>
-              </div>
-
-              <div className="kpi-tile">
-                <div className="kpi-label">
-                  <span>التوكنز المعالجة فعلياً</span>
-                  <Cpu size={15} />
-                </div>
-                <div className="kpi-value">{stats.total_tokens_processed.toLocaleString()}</div>
-                <div className="kpi-sub">الباقة: {sub?.plan_name || 'Super Admin Unlimited'}</div>
-              </div>
-            </div>
-
-            <div className="split-2">
-              {/* Recent Missions */}
-              <div className="panel">
-                <div className="panel-header">
-                  <div className="panel-title">أحدث العمليات المنفذة في حسابك</div>
-                  <button type="button" className="btn btn-ghost" onClick={() => setActiveTab('missions')}>
-                    فتح غرفة العمليات
-                  </button>
-                </div>
-                {missions.length === 0 ? (
-                  <div className="panel-body" style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                    لم تقم بتشغيل أي مهام بعد. قم بتثبيت وكيل من المتجر أو أنشئ وكيلك الخاص ثم أطلق أول مهمة.
-                  </div>
-                ) : (
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>المهمة</th>
-                        <th>النمط</th>
-                        <th>الحالة</th>
-                        <th>الخصم</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {missions.slice(0, 6).map((m) => (
-                        <tr key={m.id}>
-                          <td style={{ fontWeight: 600 }}>{m.title}</td>
-                          <td>
-                            <span className="tag mono">{m.execution_mode}</span>
-                          </td>
-                          <td>
-                            <span
-                              className={`tag ${
-                                m.status === 'completed'
-                                  ? 'tag-emerald'
-                                  : m.status === 'failed'
-                                  ? 'tag-danger'
-                                  : 'tag-amber'
-                              }`}
-                            >
-                              {m.status}
-                            </span>
-                          </td>
-                          <td className="mono">{m.credits_charged} cr</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              {/* Subscription & Capabilities Card */}
-              <div className="panel">
-                <div className="panel-header">
-                  <div className="panel-title">صلاحيات باقتك الحالية</div>
-                  <button type="button" className="btn btn-ghost" onClick={() => setActiveTab('billing')}>
-                    ترقية الباقة
-                  </button>
-                </div>
-                <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>الباقة الفعالة:</span>
-                    <span className="tag tag-emerald" style={{ fontSize: '0.84rem' }}>
-                      {user.role === 'super_admin' ? 'صلاحية المالك الكاملة (Unlimited)' : sub?.plan_name || 'Free Trial'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>تشغيل السرب المتكامل (Swarm):</span>
-                    <span className={`tag ${user.role === 'super_admin' || sub?.allow_swarm ? 'tag-emerald' : 'tag-amber'}`}>
-                      {user.role === 'super_admin' || sub?.allow_swarm ? 'مفعل' : 'يتطلب ترقية'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>بناء أدوات HTTP مخصصة:</span>
-                    <span className={`tag ${user.role === 'super_admin' || sub?.allow_custom_tools ? 'tag-emerald' : 'tag-amber'}`}>
-                      {user.role === 'super_admin' || sub?.allow_custom_tools ? 'مفعل' : 'يتطلب ترقية'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>مفاتيح المطورين (sk_nexus_...):</span>
-                    <span className={`tag ${user.role === 'super_admin' || sub?.allow_api_access ? 'tag-emerald' : 'tag-amber'}`}>
-                      {user.role === 'super_admin' || sub?.allow_api_access ? 'مفعل' : 'يتطلب باقة الشركات'}
-                    </span>
-                  </div>
-
-                  {domains.length > 0 && (
-                    <div style={{ paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 6 }}>
-                        المجالات النشطة في مساحتك:
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {domains.map((d) => (
-                          <span key={d} className="tag tag-sky">
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                  <span className="nav-item-start">
+                    {cmd.icon}
+                    <span>{cmd.label}</span>
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'agents' && (
-          <EnterpriseAgentStudio
-            user={user}
-            myAgents={myAgents}
-            marketplaceAgents={marketplaceAgents}
-            tools={tools}
-            onRefresh={loadWorkspace}
-            onRunAgent={handleRunAgentFromStudio}
-          />
-        )}
-
-        {activeTab === 'missions' && (
-          <EnterpriseMissionRoom
-            llmReady={llmReady}
-            agents={myAgents}
-            missions={missions}
-            initialMode={presetMode}
-            initialAgentIds={presetAgentIds}
-            onCompleted={loadWorkspace}
-            onGoToKeySetup={() => setActiveTab(user.role === 'super_admin' ? 'admin' : 'tools')}
-          />
-        )}
-
-        {activeTab === 'tools' && (
-          <ToolsAndApiPortal
-            user={user}
-            allowByok={Boolean(publicInfo?.allow_tenant_byok ?? true)}
-            tools={tools}
-            devKeys={devKeys}
-            agents={myAgents}
-            onRefresh={loadWorkspace}
-          />
-        )}
-
-        {activeTab === 'billing' && (
-          <BillingAndPlansView
-            user={user}
-            publicInfo={publicInfo}
-            onRefreshUser={loadWorkspace}
-          />
-        )}
-
-        {activeTab === 'admin' && user.role === 'super_admin' && (
-          <SuperAdminPanel
-            plans={publicInfo?.plans || []}
-            onConfigChanged={async () => {
-              await loadPublic();
-              await loadWorkspace();
-            }}
-          />
-        )}
-      </main>
+      {/* Toast Stack */}
+      <div className="nx-toast-stack">
+        {toasts.map((t) => (
+          <div key={t.id} className={`nx-toast ${t.isError ? 'error' : ''}`}>
+            <span>{t.text}</span>
+            <button
+              type="button"
+              onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -145,3 +145,73 @@ class AdminPlatformConfigUpdate(BaseModel):
     stripe_publishable_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
     manual_payment_instructions: Optional[str] = None
+
+
+# ==================== V3.0 ENTERPRISE MODULES ====================
+
+class KnowledgeDocCreateRequest(BaseModel):
+    title: str
+    category: str = "سياسات الشركة"
+    source_type: str = "text"  # text | file | url
+    content: str = ""
+    source_url: str = ""
+
+
+class KnowledgeSearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+
+class ChatThreadCreateRequest(BaseModel):
+    title: str = "محادثة استشارية جديدة"
+    agent_ids: List[int] = Field(default_factory=list)
+    mode: str = "single"  # single | council
+    use_kb: bool = True
+
+
+class ChatMessageCreateRequest(BaseModel):
+    content: str
+    attachment_name: str = ""
+    attachment_text: str = ""
+
+
+class WorkflowCreateRequest(BaseModel):
+    name: str
+    description: str = ""
+    category: str = "أتمتة الأعمال"
+    nodes_json: List[Dict[str, Any]] = Field(default_factory=list)
+    edges_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class WorkflowRunRequest(BaseModel):
+    input_prompt: str
+
+
+class AutomationCreateRequest(BaseModel):
+    name: str
+    agent_id: int
+    cron_expression: str = "0 9 * * *"
+    schedule_label: str = "يومياً 9:00 صباحاً"
+    goal_prompt: str
+    channel_target: str = ""
+
+
+class ConnectorCreateRequest(BaseModel):
+    platform: str  # telegram | whatsapp | slack | discord | webhook | email | notion
+    name: str
+    endpoint_or_token: str
+    target_channel: str = ""
+    config_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MemoryUpsertRequest(BaseModel):
+    agent_id: int
+    mem_key: str
+    mem_value: str
+
+
+class ToolSandboxTestRequest(BaseModel):
+    slug: str
+    args: Dict[str, Any] = Field(default_factory=dict)
+    agent_id: int = 0
+

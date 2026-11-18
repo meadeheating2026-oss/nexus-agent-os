@@ -36,6 +36,12 @@ JSON_FIELDS = {
     "parameters_schema_json",
     "headers_json",
     "agent_ids_json",
+    "chunks_json",
+    "nodes_json",
+    "edges_json",
+    "config_json",
+    "steps_json",
+    "artifacts_json",
 }
 
 BOOL_FIELDS = {
@@ -47,6 +53,7 @@ BOOL_FIELDS = {
     "is_marketplace_public",
     "can_delegate",
     "allow_tenant_byok",
+    "use_kb",
 }
 
 
@@ -287,5 +294,96 @@ def init_enterprise_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_missions_user ON missions(user_id);
             CREATE INDEX IF NOT EXISTS idx_tx_user ON wallet_transactions(user_id);
             CREATE INDEX IF NOT EXISTS idx_subs_user ON subscriptions(user_id);
+
+            CREATE TABLE IF NOT EXISTS knowledge_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'سياسات الشركة',
+                source_type TEXT NOT NULL DEFAULT 'text',
+                source_url TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL DEFAULT '',
+                word_count INTEGER NOT NULL DEFAULT 0,
+                chunks_json TEXT NOT NULL DEFAULT '[]',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS chat_threads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                mode TEXT NOT NULL DEFAULT 'single',
+                agent_ids_json TEXT NOT NULL DEFAULT '[]',
+                use_kb INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                thread_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                sender_name TEXT NOT NULL DEFAULT '',
+                content TEXT NOT NULL,
+                steps_json TEXT NOT NULL DEFAULT '[]',
+                artifacts_json TEXT NOT NULL DEFAULT '[]',
+                tokens_used INTEGER NOT NULL DEFAULT 0,
+                credits_charged REAL NOT NULL DEFAULT 0.0,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS workflows (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                category TEXT NOT NULL DEFAULT 'أتمتة الأعمال',
+                nodes_json TEXT NOT NULL DEFAULT '[]',
+                edges_json TEXT NOT NULL DEFAULT '[]',
+                total_runs INTEGER NOT NULL DEFAULT 0,
+                last_run_at TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS automations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                agent_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                cron_expression TEXT NOT NULL DEFAULT '0 9 * * *',
+                schedule_label TEXT NOT NULL DEFAULT 'يومياً 9:00 صباحاً',
+                goal_prompt TEXT NOT NULL,
+                channel_target TEXT NOT NULL DEFAULT '',
+                is_active INTEGER NOT NULL DEFAULT 1,
+                total_runs INTEGER NOT NULL DEFAULT 0,
+                last_run_at TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS connectors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                platform TEXT NOT NULL,
+                name TEXT NOT NULL,
+                endpoint_or_token TEXT NOT NULL,
+                target_channel TEXT NOT NULL DEFAULT '',
+                config_json TEXT NOT NULL DEFAULT '{}',
+                is_active INTEGER NOT NULL DEFAULT 1,
+                last_tested_at TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_kb_user ON knowledge_documents(user_id);
+            CREATE INDEX IF NOT EXISTS idx_threads_user ON chat_threads(user_id);
+            CREATE INDEX IF NOT EXISTS idx_wf_user ON workflows(user_id);
             """
         )

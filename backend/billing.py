@@ -204,6 +204,20 @@ def bootstrap_enterprise_seed() -> None:
                     },
                     "builtin",
                 ),
+                (
+                    "kb_search",
+                    "البحث الدلالي في قاعدة معرفة الشركة (RAG Search)",
+                    "قاعدة المعرفة (RAG)",
+                    "يبحث في وثائق وسياسات وملفات الشركة المرفوعة في قاعدة المعرفة ويعيد المقاطع الأكثر صلة مع المصادر.",
+                    {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "سؤال أو كلمات البحث داخل وثائق المؤسسة"}
+                        },
+                        "required": ["query"],
+                    },
+                    "builtin",
+                ),
             ]
             for slug, name, cat, desc, schema, ex_type in builtin_tools:
                 conn.execute(
@@ -215,8 +229,32 @@ def bootstrap_enterprise_seed() -> None:
                     """,
                     (slug, name, cat, desc, json.dumps(schema, ensure_ascii=False), ex_type, ts),
                 )
+        else:
+            kb_tool = conn.execute("SELECT id FROM tools WHERE slug = 'kb_search' AND user_id IS NULL").fetchone()
+            if not kb_tool:
+                conn.execute(
+                    """
+                    INSERT INTO tools (
+                        user_id, slug, name, category, description,
+                        parameters_schema_json, execution_type, created_at
+                    ) VALUES (NULL, 'kb_search', 'البحث الدلالي في قاعدة معرفة الشركة (RAG Search)', 'قاعدة المعرفة (RAG)',
+                        'يبحث في وثائق وسياسات وملفات الشركة المرفوعة في قاعدة المعرفة ويعيد المقاطع الأكثر صلة.',
+                        ?, 'builtin', ?)
+                    """,
+                    (
+                        json.dumps(
+                            {
+                                "type": "object",
+                                "properties": {"query": {"type": "string", "description": "سؤال البحث"}},
+                                "required": ["query"],
+                            },
+                            ensure_ascii=False,
+                        ),
+                        ts,
+                    ),
+                )
 
-        # 4. Super Admin Account + Starter Vouchers + Marketplace Template Agents
+        # 4. Super Admin Account + Starter Vouchers + Comprehensive Marketplace Agents
         admin_exists = conn.execute("SELECT id FROM users WHERE role = 'super_admin'").fetchone()
         if not admin_exists:
             pw_hash, pw_salt = hash_password("Admin@2026!")
@@ -242,32 +280,23 @@ def bootstrap_enterprise_seed() -> None:
                     (admin_id, ent_plan["id"], ts, period_end, ts),
                 )
 
-            # Seed public Marketplace blueprints owned by Admin so new subscribers can install them in 1 click!
             marketplace_templates = [
-                (
-                    "محلل المواقع والثغرات البيعية B2B",
-                    "خبير فحص مواقع الشركات واستخراج الفرص الضائعة",
-                    "فحص الشركات والمبيعات B2B",
-                    "يفتح موقع الشركة فعلياً بأداة السحب، يحلل العناوين والـ SEO ونقاط التحويل، ويصيغ تقريراً تنفيذياً مع عرض سعر.",
-                    "أنت خبير تدقيق رقمي وتجاري للشركات. إذا أعطاك المستخدم رابطاً استخدم أداة scrape_webpage لسحب محتواه الفعلي، وإذا أعطاك قطاعاً استخدم web_search، ثم قدم تشخيصاً رقمياً دقيقاً للثغرات مع خطة إصلاح مسعرة.",
-                    ["scrape_webpage", "web_search", "python_eval", "memory_write"],
-                ),
-                (
-                    "مهندس مقالات الـ SEO والتسويق بالعمولة",
-                    "أخصائي تصدر نتائج البحث وبناء مراجعات عالية التحويل",
-                    "الـ SEO وصناعة المحتوى",
-                    "يبحث في الويب الحي عن المنافسين والكلمات المفتاحية ويكتب مقالات مقارنة احترافية مهيأة لمحركات البحث.",
-                    "استخدم أداة web_search لرصد أحدث المعلومات والمنافسين حول الموضوع المطلوب، ثم ابنِ مقالاً شاملاً بهيكل عناوين H1/H2/H3 وجدول مقارنة ونقاط حث على الشراء.",
-                    ["web_search", "scrape_webpage", "memory_write"],
-                ),
-                (
-                    "المحلل المالي وحاسبة الصفقات والجمارك",
-                    "خبير النمذجة الرقمية وحساب العائد وصافي الربح",
-                    "التحليل المالي والتسعير",
-                    "يستخدم المحرك الحسابي بايثون لحساب التكاليف، الجمارك، الشحن، وهوامش الربح بدقة صفرية الأخطاء.",
-                    "عند وجود أي أرقام أو تسعير أو هوامش ربح، استدعِ دائماً أداة python_eval لإجراء الحسابات بدقة برمجية، وقدم جدولاً مالياً مفصلاً بصافي العائد ونسبة المخاطرة.",
-                    ["python_eval", "web_search", "memory_write"],
-                ),
+                ("المحلل المالي الكمي (Quant Strategist)", "خبير النمذجة المالية وحساب العائد المركب", "المالية والاستثمار", "يحلل التدفقات النقدية، اقتصاديات الوحدة، وصافي القيمة الحالية بدقة رياضية عبر بايثون.", "استخدم python_eval و kb_search دائماً لحساب المؤشرات المالية بدقة وتقديم جدول عوائد ومخاطر تنفيذي.", ["python_eval", "kb_search", "memory_write"]),
+                ("مدقق الميزانيات والضرائب والتكاليف", "مراجع قوائم مالية وضبط هوامش التشغيل", "المالية والاستثمار", "يراجع بنود المصروفات والجمارك والضرائب ويكتشف فرص خفض التكاليف التشغيلية.", "راجع الأرقام عبر python_eval وقارنها بسياسات الشركة في kb_search وقدّم توصيات توفير واضحة.", ["python_eval", "kb_search", "memory_write"]),
+                ("مستشار صياغة وتدقيق العقود القانونية", "محامي عقود تجارية واتفاقيات عدم إفصاح", "القانون والعقود", "يفحص العقود التجارية واتفاقيات SLA ويكشف البنود الخطرة والالتزامات المخفية مع صياغة بديلة.", "ابحث أولاً في kb_search عن سياسات الشركة التعاقدية ثم حلل كل بند قانوني وصنّف المخاطر (مرتفع/متوسط/منخفض) مع نص بديل محكم.", ["kb_search", "memory_write", "web_search"]),
+                ("مدقق الامتثال وحوكمة البيانات (GDPR & PDPL)", "خبير امتثال تشريعي وحماية الخصوصية", "القانون والعقود", "يطابق سياسات المنصة مع أنظمة حماية البيانات الشخصية واللوائح التنظيمية.", "استعن بـ kb_search و web_search لمراجعة متطلبات الامتثال وتقديم قائمة فحص تنفيذية.", ["kb_search", "web_search", "memory_write"]),
+                ("معماري الأنظمة السحابية (Principal Cloud Architect)", "مصمم أنظمة موزعة وميكروسيرفس عالية التوافر", "هندسة البرمجيات والأمن", "يصمم البنية التحتية، مخططات قواعد البيانات، واستراتيجيات التوسع الأفقي.", "قدّم تصميماً معمارياً عملياً يشمل المكونات، حدود الأداء، وتقدير التكاليف السحابية باستخدام python_eval.", ["python_eval", "kb_search", "web_search"]),
+                ("خبير الأمن السيبراني ومراجعة الثغرات (AppSec)", "محلل أمن تطبيقات واختبار اختراق دفاعي", "هندسة البرمجيات والأمن", "يفحص الكود وإعدادات الـ API ضد ثغرات OWASP Top 10 ويقدم ترقيعات فورية.", "حلل الكود أو البنية وفق OWASP Top 10 وقدّم خطوات المعالجة البرمجية الدقيقة.", ["kb_search", "web_search", "memory_write"]),
+                ("مهندس الأتمتة وخطوط النشر (DevOps & SRE)", "أخصائي Docker و Kubernetes وموثوقية الأنظمة", "هندسة البرمجيات والأمن", "يبني ملفات التشغيل والتكامل المستمر وخطط التعافي من الكوارث.", "اكتب إعدادات إنتاجية نظيفة وقابلة للتشغيل الفوري مع معايير المراقبة والتنبيه.", ["kb_search", "python_eval"]),
+                ("مدير النمو والاستحواذ (SaaS Growth Director)", "خبير اقتصاديات LTV/CAC وقنوات التوسع", "التسويق والنمو", "يصمم مسارات التحويل، خطط التسعير، وتجارب النمو السريع للشركات التقنية.", "احسب LTV و CAC ومعدل الاسترداد عبر python_eval وصمم خطة نمو مرحلية قابلة للقياس.", ["python_eval", "web_search", "kb_search"]),
+                ("خبير تصدر محركات البحث وصناعة المحتوى (SEO Lead)", "استراتيجي كلمات مفتاحية ومقالات مرجعية", "التسويق والنمو", "يحلل المنافسين على الويب ويبني خطط محتوى ومقالات متكاملة عالية التحويل.", "استخدم web_search و scrape_webpage لرصد المنافسين وبناء هيكل محتوى احترافي.", ["web_search", "scrape_webpage", "memory_write"]),
+                ("كاتب الإعلانات والعروض البيعية (Direct Copywriter)", "متخصص نصوص إعلانية وصفحات هبوط", "التسويق والنمو", "يصيغ حملات إعلانية وصفحات هبوط مقنعة وفق أطر AIDA و PAS.", "اكتب نسخاً إعلانية متعددة للاختبار A/B مع عناوين جذابة ودعوة واضحة لاتخاذ إجراء.", ["kb_search", "web_search"]),
+                ("محلل المواقع والفرص البيعية B2B (SDR Prospector)", "خبير تأهيل عملاء الشركات وفحص المواقع", "المبيعات و CRM", "يسحب موقع العميل المحتمل، يشخص نقاط الضعف، ويولّد رسالة تواصل وعرض سعر مخصص.", "افحص الرابط عبر scrape_webpage واستخرج فرص التحسين وصغ عرضاً بيعياً مخصصاً.", ["scrape_webpage", "web_search", "python_eval"]),
+                ("مهندس العروض الفنية والمناقصات (RFP Specialist)", "خبير إعداد العروض الفنية والمالية للشركات", "المبيعات و CRM", "يحول كراسات الشروط إلى عروض فنية ومالية متكاملة وجداول زمنية دقيقة.", "استخرج متطلبات العميل وقارنها بقدرات الشركة في kb_search واحسب التسعير بـ python_eval.", ["kb_search", "python_eval", "memory_write"]),
+                ("وكيل الدعم الفني الذكي وحل المشكلات (Tier-2 Support)", "أخصائي تشخيص أعطال العملاء والرد الفوري", "خدمة العملاء", "يجيب على استفسارات العملاء بدقة بالاعتماد على قاعدة المعرفة ويصعّد الحالات الحرجة.", "ابحث أولاً في kb_search عن حل المشكلة وقدّم رداً مهذباً ومرقماً خطوة بخطوة.", ["kb_search", "memory_read", "memory_write"]),
+                ("خبير استقطاب الكفاءات والمقابلات (HR Talent Partner)", "مستشار توصيف وظيفي وتقييم مرشحين", "الموارد البشرية والتشغيل", "يبني بطاقات الوصف الوظيفي، مصفوفات تقييم المقابلات، وخطط التسعين يوماً الأولى.", "صمم معايير تقييم موضوعية وأسئلة سلوكية وتقنية دقيقة للوظيفة المطلوبة.", ["kb_search", "memory_write"]),
+                ("مهندس إجراءات التشغيل القياسية (SOP & Ops Architect)", "خبير حوكمة العمليات وتقليل الهدر التشغيلي", "الموارد البشرية والتشغيل", "يحول العمليات العشوائية إلى أدلة تشغيل قياسية SOPs ومؤشرات أداء KPIs.", "ابنِ وثيقة SOP مرقمة تشمل المسؤوليات، المدخلات، الخطوات، ومعايير الجودة.", ["kb_search", "python_eval"]),
+                ("عالم البيانات والتحليل الإحصائي (Data Scientist)", "خبير تحليل الجداول والتنبؤ بالطلب", "التجارة الإلكترونية والبيانات", "يحلل بيانات المبيعات والمخزون وسلوك المتسوقين ويستخرج التوصيات الرقمية.", "استخدم python_eval لإجراء الحسابات الإحصائية ومعدلات النمو وتقديم ملخص تنفيذي.", ["python_eval", "kb_search", "memory_write"]),
             ]
             for m_name, m_role, m_dom, m_desc, m_prompt, m_tools in marketplace_templates:
                 conn.execute(
@@ -291,14 +320,15 @@ def bootstrap_enterprise_seed() -> None:
                     ),
                 )
 
-            # Seed Promo / Activation Vouchers
             pro_plan = conn.execute("SELECT id FROM subscription_plans WHERE code = 'pro_builder'").fetchone()
             swarm_plan = conn.execute("SELECT id FROM subscription_plans WHERE code = 'business_swarm'").fetchone()
+            ent_plan_row = conn.execute("SELECT id FROM subscription_plans WHERE code = 'enterprise_unlimited'").fetchone()
             conn.execute(
                 """
                 INSERT INTO vouchers (code, plan_id, bonus_credits, max_uses, used_count, is_active, created_at)
                 VALUES (?, ?, 5000.0, 100, 0, 1, ?),
-                       (?, ?, 25000.0, 50, 0, 1, ?)
+                       (?, ?, 25000.0, 50, 0, 1, ?),
+                       (?, ?, 100000.0, 25, 0, 1, ?)
                 """,
                 (
                     "PRO2026",
@@ -306,6 +336,9 @@ def bootstrap_enterprise_seed() -> None:
                     ts,
                     "VIPSWARM",
                     swarm_plan["id"] if swarm_plan else None,
+                    ts,
+                    "ENTERPRISE99",
+                    ent_plan_row["id"] if ent_plan_row else None,
                     ts,
                 ),
             )

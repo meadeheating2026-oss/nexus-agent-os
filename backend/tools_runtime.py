@@ -324,4 +324,67 @@ def execute_real_tool(
         except Exception as exc:
             return json.dumps({"url": target_url, "error": str(exc)[:200]}, ensure_ascii=False)
 
+    # 6. Tenant Knowledge Base RAG Search (kb_search)
+    if slug == "kb_search":
+        query = str(args.get("query", "")).strip()
+        matches = search_tenant_knowledge_base(user_id=user_id, query=query, top_k=4)
+        return json.dumps({"query": query, "matches": matches}, ensure_ascii=False)
+
     return json.dumps({"tool": slug, "args": args, "status": "executed"}, ensure_ascii=False)
+
+
+def chunk_text_for_rag(text: str, chunk_size: int = 550) -> List[str]:
+    paragraphs = [p.strip() for p in re.split(r"\n{2,}", text.strip()) if p.strip()]
+    chunks: List[str] = []
+    buf = ""
+    for para in paragraphs:
+        if len(buf) + len(para) + 2 <= chunk_size:
+            buf = f"{buf}\n\n{para}".strip() if buf else para
+        else:
+            if buf:
+                chunks.append(buf)
+            if len(para) <= chunk_size:
+                buf = para
+            else:
+                for idx in range(0, len(para), chunk_size):
+                    chunks.append(para[idx : idx + chunk_size])
+                buf = ""
+    if buf:
+        chunks.append(buf)
+    return chunks[:80]
+
+
+def search_tenant_knowledge_base(user_id: int, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    tokens = [t.lower() for t in re.findall(r"[\w\u0600-\u06FF]{2,}", query)]
+    with get_db() as conn:
+        docs = rows_to_list(
+            conn.execute(
+                "SELECT id, title, category, chunks_json, content FROM knowledge_documents WHERE user_id = ? ORDER BY id DESC",
+                (user_id,),
+            ).fetchall()
+        )
+    scored: List[Dict[str, Any]] = []
+    for doc in docs:
+        chunks = doc.get("chunks_json") or chunk_text_for_rag(str(doc.get("content", "")))
+        title_low = str(doc.get("title", "")).lower()
+        for c_idx, chunk in enumerate(chunks):
+            c_low = str(chunk).lower()
+            if not tokens:
+                score = 0.5
+            else:
+                hits = sum(2.5 if tok in title_low else (1.5 if tok in c_low else 0.0) for tok in tokens)
+                score = round(min(0.99, hits / max(1.0, len(tokens) * 1.6)), 3)
+            if score > 0 or not tokens:
+                scored.append(
+                    {
+                        "doc_id": doc["id"],
+                        "doc_title": doc["title"],
+                        "category": doc["category"],
+                        "chunk_index": c_idx + 1,
+                        "excerpt": str(chunk)[:520],
+                        "score": score,
+                    }
+                )
+    scored.sort(key=lambda item: item["score"], reverse=True)
+    return scored[: max(1, top_k)]
+

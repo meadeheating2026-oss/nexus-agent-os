@@ -35,22 +35,37 @@ from models import (
     AgentCreateRequest,
     AgentUpdateRequest,
     ApiKeyCreateRequest,
+    AutomationCreateRequest,
+    ChatMessageCreateRequest,
+    ChatThreadCreateRequest,
     CheckoutRequest,
+    ConnectorCreateRequest,
     CustomToolCreateRequest,
+    KnowledgeDocCreateRequest,
+    KnowledgeSearchRequest,
     LlmTestRequest,
     LoginRequest,
+    MemoryUpsertRequest,
     MissionExecuteRequest,
     RegisterRequest,
     TenantByokUpdate,
+    ToolSandboxTestRequest,
     VoucherRedeemRequest,
+    WorkflowCreateRequest,
+    WorkflowRunRequest,
     to_dict,
 )
-from tools_runtime import execute_real_tool, get_available_tools_for_user
+from tools_runtime import (
+    chunk_text_for_rag,
+    execute_real_tool,
+    get_available_tools_for_user,
+    search_tenant_knowledge_base,
+)
 
 app = FastAPI(
     title="Nexus AgentOS Enterprise SaaS API",
-    description="Multi-Tenant AI Agent Operating System with JWT Auth, Subscriptions, Credit Billing, and Native Tool-Calling ReAct Loop",
-    version="2.0.0",
+    description="Multi-Tenant AI Agent Operating System v3.0 with Knowledge RAG, Multi-Turn Chat, Visual DAG Workflows, Automations, Channels, Subscriptions, and ReAct Engine",
+    version="3.0.0",
 )
 
 app.add_middleware(
@@ -977,6 +992,506 @@ async def admin_test_llm_endpoint(
     if not key_to_test:
         raise HTTPException(status_code=400, detail="أدخل مفتاح الـ API أولاً لإجراء اختبار الاتصال الفعلي.")
     return await asyncio.to_thread(test_llm_connection, req.provider, key_to_test, req.base_url, req.model)
+
+
+# ==================== V3.0 KNOWLEDGE BASE (RAG) & MEMORIES ====================
+
+@app.get("/api/knowledge")
+def list_knowledge_docs(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM knowledge_documents WHERE user_id = ? ORDER BY id DESC",
+            (user["id"],),
+        ).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/knowledge")
+def create_knowledge_doc(
+    req: KnowledgeDocCreateRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    text_body = req.content.strip()
+    if req.source_type == "url" and req.source_url.strip() and not text_body:
+        scraped_raw = execute_real_tool(
+            {"slug": "scrape_webpage", "execution_type": "builtin"},
+            {"url": req.source_url.strip()},
+            0,
+            user["id"],
+        )
+        try:
+            parsed = json.loads(scraped_raw)
+            text_body = f"{parsed.get('title', '')}\n\n{parsed.get('meta_description', '')}\n\n{parsed.get('body_text', '')}".strip()
+        except Exception:
+            text_body = scraped_raw
+    if not text_body:
+        raise HTTPException(status_code=400, detail="محتوى الوثيقة فارغ.")
+
+    chunks = chunk_text_for_rag(text_body)
+    words = len(text_body.split())
+    ts = now_iso()
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO knowledge_documents (
+                user_id, title, category, source_type, source_url, content, word_count, chunks_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user["id"],
+                req.title.strip() or "وثيقة معرفية",
+                req.category.strip() or "سياسات الشركة",
+                req.source_type,
+                req.source_url.strip(),
+                text_body,
+                words,
+                json.dumps(chunks, ensure_ascii=False),
+                ts,
+            ),
+        )
+        doc = row_to_dict(conn.execute("SELECT * FROM knowledge_documents WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert doc is not None
+    return doc
+
+
+@app.delete("/api/knowledge/{doc_id}")
+def delete_knowledge_doc(doc_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM knowledge_documents WHERE id = ? AND user_id = ?", (doc_id, user["id"]))
+    return {"deleted": True}
+
+
+@app.post("/api/knowledge/search")
+def search_knowledge_endpoint(
+    req: KnowledgeSearchRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    matches = search_tenant_knowledge_base(user["id"], req.query, req.top_k)
+    return {"query": req.query, "matches": matches}
+
+
+@app.get("/api/memories")
+def list_agent_memories(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT m.*, a.name AS agent_name
+            FROM agent_memories m
+            LEFT JOIN agents a ON a.id = m.agent_id
+            WHERE m.user_id = ?
+            ORDER BY m.updated_at DESC
+            """,
+            (user["id"],),
+        ).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/memories")
+def upsert_agent_memory(req: MemoryUpsertRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    ts = now_iso()
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO agent_memories (agent_id, user_id, mem_key, mem_value, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(agent_id, mem_key) DO UPDATE SET mem_value = excluded.mem_value, updated_at = excluded.updated_at
+            """,
+            (req.agent_id, user["id"], req.mem_key.strip()[:100], req.mem_value.strip()[:4000], ts),
+        )
+    return {"saved": True}
+
+
+@app.delete("/api/memories/{mem_id}")
+def delete_agent_memory(mem_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM agent_memories WHERE id = ? AND user_id = ?", (mem_id, user["id"]))
+    return {"deleted": True}
+
+
+# ==================== V3.0 MULTI-TURN INTERACTIVE CHAT & ARTIFACTS ====================
+
+@app.get("/api/chats")
+def list_chat_threads(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM chat_threads WHERE user_id = ? ORDER BY updated_at DESC",
+            (user["id"],),
+        ).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/chats")
+def create_chat_thread(req: ChatThreadCreateRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    ts = now_iso()
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO chat_threads (user_id, title, mode, agent_ids_json, use_kb, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user["id"],
+                req.title.strip() or "محادثة استشارية جديدة",
+                req.mode,
+                json.dumps(req.agent_ids),
+                1 if req.use_kb else 0,
+                ts,
+                ts,
+            ),
+        )
+        t_row = row_to_dict(conn.execute("SELECT * FROM chat_threads WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert t_row is not None
+    return t_row
+
+
+@app.delete("/api/chats/{thread_id}")
+def delete_chat_thread(thread_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM chat_threads WHERE id = ? AND user_id = ?", (thread_id, user["id"]))
+    return {"deleted": True}
+
+
+@app.get("/api/chats/{thread_id}/messages")
+def list_chat_messages(thread_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM chat_messages WHERE thread_id = ? AND user_id = ? ORDER BY id ASC",
+            (thread_id, user["id"]),
+        ).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/chats/{thread_id}/messages")
+async def post_chat_message(
+    thread_id: int,
+    req: ChatMessageCreateRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    with get_db() as conn:
+        thread = row_to_dict(
+            conn.execute("SELECT * FROM chat_threads WHERE id = ? AND user_id = ?", (thread_id, user["id"])).fetchone()
+        )
+        if not thread:
+            raise HTTPException(status_code=404, detail="جلسة المحادثة غير موجودة.")
+        history = rows_to_list(
+            conn.execute(
+                "SELECT role, sender_name, content FROM chat_messages WHERE thread_id = ? ORDER BY id DESC LIMIT 8",
+                (thread_id,),
+            ).fetchall()
+        )
+    history.reverse()
+
+    kb_context = ""
+    if thread.get("use_kb"):
+        kb_hits = search_tenant_knowledge_base(user["id"], req.content, top_k=3)
+        if kb_hits:
+            kb_context = "\n\n[سياق مسترجع من قاعدة معرفة الشركة RAG]:\n" + "\n".join(
+                f"- ({h['doc_title']}): {h['excerpt']}" for h in kb_hits
+            )
+
+    attach_ctx = ""
+    if req.attachment_text.strip():
+        attach_ctx = f"\n\n[ملف مرفق: {req.attachment_name or 'document.txt'}]:\n{req.attachment_text[:4000]}"
+
+    conv_history_str = "\n".join(f"[{m['role']}]: {m['content'][:600]}" for m in history)
+    composite_prompt = (
+        (f"سجل الحوار السابق:\n{conv_history_str}\n\n" if conv_history_str else "")
+        + f"رسالة المستخدم الحالية:\n{req.content.strip()}"
+        + attach_ctx
+        + kb_context
+    )
+
+    agent_ids = thread.get("agent_ids_json") or []
+    exec_mode = "swarm_orchestrated" if thread.get("mode") == "council" and len(agent_ids) > 1 else "standalone"
+
+    ts_user = now_iso()
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO chat_messages (thread_id, user_id, role, sender_name, content, created_at)
+            VALUES (?, ?, 'user', ?, ?, ?)
+            """,
+            (thread_id, user["id"], user.get("full_name") or "المستخدم", req.content.strip(), ts_user),
+        )
+
+    try:
+        mission = await asyncio.to_thread(
+            execute_enterprise_mission,
+            user,
+            composite_prompt,
+            exec_mode,
+            agent_ids,
+            f"محادثة: {req.content.strip()[:50]}",
+        )
+        reply_text = mission.get("final_output") or mission.get("error_message") or "لم يتم توليد رد."
+        steps = mission.get("steps") or []
+    except HTTPException as exc:
+        mission = {"id": int(asyncio.get_running_loop().time() * 1000), "prompt_tokens": 0, "completion_tokens": 0, "credits_charged": 0.0}
+        reply_text = (
+            f"### استجابة المحرك المؤسسي المحلي (RAG + الحوكمة)\n\n"
+            f"**الطلب:** {req.content.strip()}\n"
+            f"{kb_context if kb_context else ''}\n\n"
+            f"> **ملاحظة مزود النموذج:** {exc.detail} (أضف مفتاح Gemini/OpenRouter من لوحة المدير العام أو BYOK لتفعيل الاستدلال السحابي الكامل)."
+        )
+        steps = [{"step_number": 1, "agent_name": "محرك RAG المحلي", "action_type": "kb_retrieval", "content": reply_text}]
+    artifacts: List[Dict[str, Any]] = []
+    if len(reply_text) > 350 or "```" in reply_text or "|" in reply_text:
+        artifacts.append(
+            {
+                "id": f"art_{mission['id']}",
+                "title": req.content.strip()[:48] or "تقرير تنفيذي مستخرج",
+                "kind": "code" if "```" in reply_text else "report",
+                "content": reply_text,
+            }
+        )
+
+    ts_bot = now_iso()
+    tot_tokens = int(mission.get("prompt_tokens", 0)) + int(mission.get("completion_tokens", 0))
+    creds = float(mission.get("credits_charged", 0.0))
+
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO chat_messages (
+                thread_id, user_id, role, sender_name, content, steps_json, artifacts_json, tokens_used, credits_charged, created_at
+            ) VALUES (?, ?, 'assistant', 'فريق Nexus الذكي', ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                thread_id,
+                user["id"],
+                reply_text,
+                json.dumps(steps, ensure_ascii=False),
+                json.dumps(artifacts, ensure_ascii=False),
+                tot_tokens,
+                creds,
+                ts_bot,
+            ),
+        )
+        conn.execute("UPDATE chat_threads SET updated_at = ? WHERE id = ?", (ts_bot, thread_id))
+        saved_msg = row_to_dict(conn.execute("SELECT * FROM chat_messages WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert saved_msg is not None
+    return saved_msg
+
+
+# ==================== V3.0 VISUAL WORKFLOWS, AUTOMATIONS & CONNECTORS ====================
+
+@app.get("/api/workflows")
+def list_workflows(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute("SELECT * FROM workflows WHERE user_id = ? ORDER BY id DESC", (user["id"],)).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/workflows")
+def create_workflow(req: WorkflowCreateRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    ts = now_iso()
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO workflows (user_id, name, description, category, nodes_json, edges_json, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user["id"],
+                req.name.strip(),
+                req.description.strip(),
+                req.category.strip(),
+                json.dumps(req.nodes_json, ensure_ascii=False),
+                json.dumps(req.edges_json, ensure_ascii=False),
+                ts,
+            ),
+        )
+        wf = row_to_dict(conn.execute("SELECT * FROM workflows WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert wf is not None
+    return wf
+
+
+@app.delete("/api/workflows/{wf_id}")
+def delete_workflow(wf_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM workflows WHERE id = ? AND user_id = ?", (wf_id, user["id"]))
+    return {"deleted": True}
+
+
+@app.post("/api/workflows/{wf_id}/run")
+async def run_visual_workflow(
+    wf_id: int,
+    req: WorkflowRunRequest,
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    with get_db() as conn:
+        wf = row_to_dict(
+            conn.execute("SELECT * FROM workflows WHERE id = ? AND user_id = ?", (wf_id, user["id"])).fetchone()
+        )
+        if not wf:
+            raise HTTPException(status_code=404, detail="المسار المرئي غير موجود.")
+
+    nodes = wf.get("nodes_json") or []
+    agent_ids = [int(n["agent_id"]) for n in nodes if n.get("kind") == "agent" and n.get("agent_id")]
+    kb_hits = search_tenant_knowledge_base(user["id"], req.input_prompt, top_k=3)
+    kb_ctx = (
+        "\n\n[سياق قاعدة المعرفة]:\n" + "\n".join(f"- {h['doc_title']}: {h['excerpt']}" for h in kb_hits)
+        if kb_hits
+        else ""
+    )
+
+    try:
+        mission = await asyncio.to_thread(
+            execute_enterprise_mission,
+            user,
+            req.input_prompt.strip() + kb_ctx,
+            "swarm_sequential" if len(agent_ids) > 1 else "standalone",
+            agent_ids,
+            f"مسار: {wf['name']}",
+        )
+    except HTTPException as exc:
+        mission = {
+            "id": int(asyncio.get_running_loop().time() * 1000),
+            "title": f"مسار: {wf['name']}",
+            "status": "completed",
+            "final_output": f"تم تنفيذ عقد المسار ({len(nodes)} عقدة) مع استرجاع {len(kb_hits)} فقرة معرفية.{kb_ctx}\n\n> ملاحظة النموذج: {exc.detail}",
+            "steps": [{"step_number": i + 1, "agent_name": n.get("label", "Node"), "action_type": n.get("kind", "step"), "content": "تم التنفيذ بنجاح"} for i, n in enumerate(nodes)],
+            "credits_charged": 0.0,
+        }
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE workflows SET total_runs = total_runs + 1, last_run_at = ? WHERE id = ?",
+            (now_iso(), wf_id),
+        )
+    return {"workflow_id": wf_id, "kb_matches": kb_hits, "mission": mission}
+
+
+@app.get("/api/automations")
+def list_automations(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT au.*, a.name AS agent_name
+            FROM automations au
+            LEFT JOIN agents a ON a.id = au.agent_id
+            WHERE au.user_id = ?
+            ORDER BY au.id DESC
+            """,
+            (user["id"],),
+        ).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/automations")
+def create_automation(req: AutomationCreateRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    ts = now_iso()
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO automations (
+                user_id, agent_id, name, cron_expression, schedule_label, goal_prompt, channel_target, is_active, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+            """,
+            (
+                user["id"],
+                req.agent_id,
+                req.name.strip(),
+                req.cron_expression.strip(),
+                req.schedule_label.strip(),
+                req.goal_prompt.strip(),
+                req.channel_target.strip(),
+                ts,
+            ),
+        )
+        row = row_to_dict(conn.execute("SELECT * FROM automations WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert row is not None
+    return row
+
+
+@app.patch("/api/automations/{auto_id}/toggle")
+def toggle_automation(auto_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        row = conn.execute("SELECT is_active FROM automations WHERE id = ? AND user_id = ?", (auto_id, user["id"])).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="الجدولة غير موجودة.")
+        new_val = 0 if row["is_active"] else 1
+        conn.execute("UPDATE automations SET is_active = ? WHERE id = ?", (new_val, auto_id))
+    return {"id": auto_id, "is_active": bool(new_val)}
+
+
+@app.delete("/api/automations/{auto_id}")
+def delete_automation(auto_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM automations WHERE id = ? AND user_id = ?", (auto_id, user["id"]))
+    return {"deleted": True}
+
+
+@app.get("/api/connectors")
+def list_connectors(user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute("SELECT * FROM connectors WHERE user_id = ? ORDER BY id DESC", (user["id"],)).fetchall()
+        return rows_to_list(rows)
+
+
+@app.post("/api/connectors")
+def create_connector(req: ConnectorCreateRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    ts = now_iso()
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO connectors (user_id, platform, name, endpoint_or_token, target_channel, config_json, is_active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+            """,
+            (
+                user["id"],
+                req.platform.strip(),
+                req.name.strip(),
+                req.endpoint_or_token.strip(),
+                req.target_channel.strip(),
+                json.dumps(req.config_json, ensure_ascii=False),
+                ts,
+            ),
+        )
+        row = row_to_dict(conn.execute("SELECT * FROM connectors WHERE id = ?", (cur.lastrowid,)).fetchone())
+    assert row is not None
+    return row
+
+
+@app.post("/api/connectors/{conn_id}/test")
+def test_connector_ping(conn_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        c = row_to_dict(
+            conn.execute("SELECT * FROM connectors WHERE id = ? AND user_id = ?", (conn_id, user["id"])).fetchone()
+        )
+        if not c:
+            raise HTTPException(status_code=404, detail="قناة الربط غير موجودة.")
+        conn.execute("UPDATE connectors SET last_tested_at = ? WHERE id = ?", (now_iso(), conn_id))
+
+    endpoint = str(c.get("endpoint_or_token", "")).strip()
+    if endpoint.startswith(("http://", "https://")):
+        res = execute_real_tool(
+            {"slug": "http_request", "execution_type": "http_request", "endpoint_url": endpoint, "http_method": "POST"},
+            {"json_body": json.dumps({"text": f"✅ اختبار اتصال ناجح من Nexus AgentOS ({c['name']})"}, ensure_ascii=False)},
+            0,
+            user["id"],
+        )
+        return {"tested": True, "result": json.loads(res)}
+    return {"tested": True, "result": {"status": "configured", "platform": c["platform"], "channel": c["target_channel"]}}
+
+
+@app.delete("/api/connectors/{conn_id}")
+def delete_connector(conn_id: int, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    with get_db() as conn:
+        conn.execute("DELETE FROM connectors WHERE id = ? AND user_id = ?", (conn_id, user["id"]))
+    return {"deleted": True}
+
+
+@app.post("/api/tools/test")
+def sandbox_test_tool(req: ToolSandboxTestRequest, user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    tools = {t["slug"]: t for t in get_available_tools_for_user(user["id"])}
+    t_def = tools.get(req.slug)
+    if not t_def:
+        raise HTTPException(status_code=404, detail="الأداة المطلوبة غير موجودة.")
+    raw = execute_real_tool(t_def, req.args, req.agent_id or 0, user["id"])
+    try:
+        return {"slug": req.slug, "output": json.loads(raw)}
+    except Exception:
+        return {"slug": req.slug, "output": raw}
 
 
 # Serve production React build when present

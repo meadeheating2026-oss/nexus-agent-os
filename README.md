@@ -1,69 +1,58 @@
-# Nexus AgentOS Enterprise — منصة تشغيل وبيع الوكلاء متعددة المستأجرين (Multi-Tenant AI SaaS)
+# Nexus AgentOS Enterprise v3.0
 
-منصة تجارية متكاملة (Production-Ready Multi-Tenant SaaS) لبناء، تشغيل، وبيع اشتراكات وكلاء الذكاء الاصطناعي المستقلين وفرق السرب (**ReAct + Swarm Orchestration**) مع نظام تسجيل دخول وصلاحيات حقيقي، باقات اشتراك، فواتير ودفع إلكتروني، محفظة نقاط استهلاك، وبوابة API للمطورين.
+**نظام التشغيل المؤسسي الشامل لبناء وإدارة وتشغيل وكلاء الذكاء الاصطناعي، مسارات العمل المرئية (DAG)، قواعد المعرفة (RAG)، والأتمتة متعددة المستأجرين (Multi-Tenant AI Operating System).**
 
----
-
-## 1. المعمارية الهندسية الحقيقية (بدون أي محاكاة وهمية)
-
-1. **نظام هوية وصلاحيات متكامل (`backend/auth.py`)**:
-   - تشفير كلمات المرور عبر `PBKDF2-HMAC-SHA256` (200,000 دورة مع Salt عشوائي).
-   - جلسات مصادقة موقعة رقمياً عبر `JWT (HS256)`.
-   - فصل صارم للصلاحيات (`RBAC`) وعزل بيانات كل مشترك (`Multi-Tenant Isolation`) بين مالك المنصة (`super_admin`) والعملاء المشتركين (`subscriber`).
-   - مفاتيح مطورين خارجية (`sk_nexus_...`) مخزنة كـ `SHA-256 Hash` للربط البرمجي عبر `X-API-Key`.
-
-2. **محرك الباقات والفوترة وهامش الربح (`backend/billing.py`)**:
-   - 4 باقات تجارية جاهزة (`Free Trial`, `Pro Builder`, `Business Swarm`, `Enterprise Unlimited`) بقيود صارمة على عدد الوكلاء، تشغيل السرب، الأدوات المخصصة، والـ API (`HTTP 402 Quota Guard`).
-   - دعم بوابة **Stripe Checkout + Webhook HMAC Signature Verification**، بالإضافة إلى طلبات التحويل البنكي / InstaPay واعتمادها من لوحة المالك، وأكواد التفعيل الفورية (`Vouchers`).
-   - تسوية مالية ذرية (`settle_mission_billing`) تحسب تكلفة التوكنز الفعلية بالدولار، وتقتطع نقاط العميل وفق معامل ربح المالك (`credits_markup_multiplier`)، وتُسجل صافي الربح في دفتر الأستاذ (`wallet_transactions`).
-
-3. **محرك الوكلاء الفعلي والأدوات الحية (`backend/agent_runtime.py` & `backend/tools_runtime.py`)**:
-   - حلقة استدلال واستدعاء دوال حقيقية (**Multi-Turn ReAct Function Calling**) متوافقة مع `Google Gemini`، `OpenRouter`، و`OpenAI`، مع دعم مفاتيح العملاء الخاصة (`BYOK`).
-   - 5 أدوات تنفيذية فعلية مدمجة: بحث ويب حي (`web_search`)، قراءة صفحات الإنترنت (`webpage_reader`)، حاسبة بايثون آمنة عبر شجرة AST (`python_eval`)، ذاكرة دائمة في قاعدة البيانات (`memory_kv`)، وأدوات `HTTP REST API` مخصصة يبنيها المشتركون، بالإضافة إلى أداة تفويض الزملاء المباشرة (`delegate_to_colleague`).
+- **الرابط السحابي المباشر (GitHub Pages):** https://meadeheating2026-oss.github.io/nexus-agent-os/
+- **التشغيل الفوري بدون خادم (Offline Single-File):** افتح الملف `instant-local.html` مباشرة في المتصفح.
 
 ---
 
-## 2. بيانات الدخول الافتراضية وأكواد التجربة
+## الوحدات المؤسسية العشر في الإصدار v3.0
 
-عند أول تشغيل للخادم، يتم تهيئة حساب المالك والباقات وأكواد الترقية تلقائياً:
-
-- **بريد مالك المنصة (`Super Admin`)**: `admin@nexus-os.io`
-- **كلمة المرور الافتراضية**: `Admin@2026!` *(يُنصح بتغييرها فور النشر التجاري)*
-- **أكواد قسائم جاهزة لتجربة ترقية حسابات العملاء مجاناً**:
-  - `PRO2026`: ترقية فورية إلى باقة المحترفين + `1,000` نقطة إضافية.
-  - `VIPSWARM`: ترقية فورية إلى باقة الشركات والسرب + `5,000` نقطة إضافية.
+1. **القيادة التنفيذية والتحليلات (`ExecutiveOverview`):** مؤشرات الأداء الحية، منحنيات استهلاك الرصيد والتوكنز برسوم SVG التفاعلية، وتوزيع نشاط الوكلاء حسب القطاعات.
+2. **استوديو الحوار التفاعلي ومساحة المخرجات (`InteractiveChatStudio`):** محادثات متعددة الأدوار (وكيل منفرد أو مجلس خبراء استشاري Swarm Council)، رفع ملفات (`.txt/.md/.csv/.json`)، ربط مباشر بقاعدة المعرفة RAG، ولوحة Artifacts جانبية لتصدير التقارير (`Markdown`, `JSON`, `Print/PDF`).
+3. **باني مسارات العمل المرئي (`VisualWorkflowStudio`):** لوحة DAG تفاعلية تربط عقد التشغيل (`Trigger` -> `RAG` -> `Agent` -> `Condition` -> `Output`) مع محاكاة وتنفيذ حي خطوة بخطوة و4 قوالب مؤسسية جاهزة.
+4. **سوق واستوديو الوكلاء (`AgentMarketplaceStudio`):** يضم **24 وكيلاً متخصصاً** عبر **8 قطاعات أعمال** (المالية، القانونية، الهندسة والأمن السيبراني، التسويق، المبيعات، خدمة العملاء، الموارد البشرية، التجارة والبيانات) مع منشئ وكلاء مخصص كامل.
+5. **قاعدة المعرفة والذاكرة الدائمة (`KnowledgeAndMemoryHub`):** فهرسة وثائق وسياسات الشركة وتقطيعها تلقائياً (Semantic Chunking) مع مختبر استرجاع فوري وذاكرة طويلة المدى (`Key-Value`) لكل وكيل.
+6. **الأتمتة وقنوات الربط الخارجي (`AutomationsAndChannelsView`):** جدولة مهام دورية بصيغة `Cron`، وربط القنوات المؤسسية (`Telegram`, `WhatsApp Cloud`, `Slack`, `Discord`, `Webhook`, `SMTP Email`, `Notion`).
+7. **غرفة العمليات والمهام (`MissionControlPanel`):** إطلاق مهام مستقلة أو متسلسلة أو مُنسّقة عبر قائد فريق (Orchestrator) مع سجل تتبع تفصيلي (Traceability) لخطوات التفكير واستدعاء الأدوات.
+8. **الأدوات وبوابة المطورين (`ToolsAndDeveloperHub`):** بيئة اختبار معزولة (Tool Sandbox) للأدوات المدمجة (`python_eval`, `kb_search`, `scrape_webpage`, `http_request`)، تسجيل أدوات Webhook خارجية، وتوليد مفاتيح `nxk_live_...` مع أمثلة `cURL` و`Python`.
+9. **الاشتراكات ومحفظة الرصيد (`BillingAndWalletPanel`):** باقات متعددة المستأجرين، سجل معاملات مالي، شحن فوري عبر القسائم أو بوابات الدفع، وإعدادات المفاتيح الخاصة (`BYOK`: `Gemini`, `OpenRouter`, `OpenAI`).
+10. **لوحة تحكم المالك (`SuperAdminConsole`):** إدارة المستأجرين والأرصدة، اعتماد الفواتير البنكية، إصدار قسائم الشحن، وضبط مفاتيح النماذج المركزية وهوامش الربح.
 
 ---
 
-## 3. طرق التشغيل والنشر السحابي
+## واجهة وتجربة مستخدم تنفيذية (Executive UI)
 
-### أ) التشغيل المباشر على جهازك (Windows / Linux / macOS)
-- **على Windows**: شغل الملف `start.bat`
-- **على Linux / macOS**:
-  ```bash
-  chmod +x start.sh
-  ./start.sh
-  ```
+- تبديل فوري بين **الوضع الداكن التنفيذي (Dark Mode)** و**الوضع النهاري المؤسسي (Light Mode)**.
+- لوحة أوامر سريعة عبر الاختصار **`Ctrl + K`** للانتقال الفوري بين الوحدات العشر.
+- دعم كامل للاتجاه العربي الأصيل (**RTL**) مع خطوط `IBM Plex Sans Arabic` و`Inter` و`IBM Plex Mono`.
 
-### ب) النشر التجاري الموحد عبر Docker (Railway / Render / Fly.io / VPS)
-يدمج `Dockerfile` الواجهة الأمامية المبنية مع خادم `FastAPI` في حاوية واحدة على المنفذ `8000` مع وحدة تخزين دائمة لقاعدة البيانات `nexus_enterprise.db`:
+---
+
+## حسابات وقسائم التجربة السريعة (Cloud & Local)
+
+| الحساب | البريد الإلكتروني | كلمة المرور | الصلاحية |
+| :--- | :--- | :--- | :--- |
+| **المدير العام (Super Admin)** | `admin@nexus-os.io` | `Admin@2026!` | تحكم كامل بالمنصة والمستأجرين |
+| **مشترك تجريبي (Founder)** | `founder@mena-tech.io` | `Demo@2026!` | مساحة عمل شركة تقنية جاهزة |
+
+- **قسائم الشحن والترقية الفورية:** `PRO2026` ، `VIPSWARM` ، `ENTERPRISE99`
+
+---
+
+## التشغيل الكامل عبر الخادم (Full-Stack FastAPI + React 19)
+
 ```bash
-docker compose up --build -d
+# 1. بناء الواجهة الأمامية
+cd frontend && npm ci && npm run build && cd ..
+
+# 2. تشغيل الخادم الخلفي (70 نقطة نهاية REST API + SQLite WAL)
+pip install -r backend/requirements.txt
+uvicorn main:app --app-dir backend --host 0.0.0.0 --port 8000
 ```
 
----
-
-## 4. استدعاء الوكلاء برمجياً عبر Developer API
-
-يمكن للمشتركين في باقات الشركات والمؤسسات توليد مفتاح `sk_nexus_...` واستدعاء وكلائهم من أي نظام خارجي:
-
+أو عبر Docker Compose:
 ```bash
-curl -X POST https://your-domain.com/api/v1/run \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: sk_nexus_YOUR_GENERATED_KEY" \
-  -d '{
-    "agent_id": 4,
-    "execution_mode": "standalone",
-    "prompt": "ابحث في الويب عن أحدث أسعار الفائدة الفيدرالية واحسب العائد المركب لمبلغ 250000 دولار على 3 سنوات"
-  }'
+docker compose up --build -d
 ```
